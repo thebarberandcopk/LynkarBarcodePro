@@ -1,0 +1,7 @@
+{
+  "name": "lynkkar-pro-label-studio",
+  "private": true,
+  "version": "2.0.0",
+  "scripts": {"deploy":"npx wrangler deploy"},
+  "devDependencies": {"wrangler":"latest"}
+}
