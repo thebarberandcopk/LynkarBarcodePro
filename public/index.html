@@ -1110,7 +1110,17 @@
       .pricing-cards { grid-template-columns: 1fr; }
       .customer-summary { grid-template-columns: 1fr 1fr; }
     }
-  </style>
+  
+    /* ===== Account approval / subscription lock ===== */
+    .account-lock-overlay { position: fixed; inset: 0; z-index: 99999; display:none; align-items:center; justify-content:center; padding:24px; background:rgba(15,23,42,.78); backdrop-filter:blur(7px); }
+    .account-lock-overlay.show { display:flex; }
+    .account-lock-card { width:min(520px,100%); background:#fff; border-radius:18px; padding:30px; text-align:center; box-shadow:0 25px 70px rgba(0,0,0,.28); }
+    .account-lock-card .lock-icon { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; background:#fff3e0; color:#f28500; font-size:1.7rem; }
+    .account-lock-card h2 { margin:0 0 8px; color:#1e2b3c; }
+    .account-lock-card p { color:#64748b; line-height:1.6; margin:0 0 18px; }
+    .account-lock-card .lock-countdown { font-weight:800; color:#c62828; margin:10px 0 18px; }
+    .main-admin-note { font-size:.72rem; color:#64748b; margin-top:8px; }
+</style>
 </head>
 <body>
 
@@ -1520,6 +1530,7 @@
         </div>
 
         <div class="section-title"><i class="fas fa-users"></i> User Management</div>
+        <div class="main-admin-note"><i class="fas fa-shield-alt"></i> Cloud sign-ups are always created as regular users and must be approved by the main administrator. This screen cannot create another administrator.</div>
         <div id="userListContainer" style="margin-bottom: 12px;"></div>
         <div class="form-row" style="gap: 8px;">
           <div class="form-group" style="flex:1;"><input type="text" id="newUsername" placeholder="New username" style="font-size: 0.8rem; padding: 8px 10px;"></div>
@@ -1529,7 +1540,6 @@
           <div class="form-group" style="flex:1;">
             <select id="newUserRole" style="font-size: 0.8rem; padding: 8px 10px;">
               <option value="user">User</option>
-              <option value="admin">Admin</option>
             </select>
           </div>
           <div class="form-group" style="flex:1;">
@@ -2167,12 +2177,53 @@
   // ==================== CONSTANTS & HELPERS ====================
   const USERS_KEY = 'lynkkar_users';
   const SESSION_KEY = 'lynkkar_logged_in_user';
-  const PLACEMENT_KEY = 'lynkkar_placement_order';
+  const PLACEMENT_KEY = 'lynkkar_placement_order_v2';
   const LABELS_KEY = 'lynkkar_labels_v2';
   const SETTINGS_KEY = 'lynkkar_settings_v2';
   const CONTACT_PHONE = '923216175757';
   const TEXT_KEYS = ['brand', 'product', 'details', 'price', 'size'];
   const DEFAULT_PLACEMENT = ['brand', 'product', 'details', 'price', 'size', 'image', 'barcode', 'qrcode', 'sku'];
+
+  // ==================== PLACEMENT ORDER ====================
+  function normalizePlacementOrder(order) {
+    const source = Array.isArray(order) ? order : [];
+    const valid = source.filter(k => DEFAULT_PLACEMENT.includes(k));
+    return [...new Set(valid)].concat(DEFAULT_PLACEMENT.filter(k => !valid.includes(k)));
+  }
+  function getPlacementOrder() {
+    return normalizePlacementOrder(lsGet(PLACEMENT_KEY, DEFAULT_PLACEMENT));
+  }
+  function savePlacementOrder(order) {
+    const normalized = normalizePlacementOrder(order);
+    lsSet(PLACEMENT_KEY, normalized);
+    return normalized;
+  }
+  function initPlacementGrid() {
+    const grid = $('placementGrid');
+    if (!grid) return;
+    const order = getPlacementOrder();
+    const cells = Array.from(grid.querySelectorAll('.placement-cell'));
+    const byKey = Object.fromEntries(cells.map(c => [c.dataset.el, c]));
+    order.forEach(k => { if (byKey[k]) grid.appendChild(byKey[k]); });
+    let dragged = null;
+    grid.querySelectorAll('.placement-cell').forEach(cell => {
+      cell.ondragstart = () => { dragged = cell; cell.classList.add('dragging'); };
+      cell.ondragend = () => { cell.classList.remove('dragging'); dragged = null; grid.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over')); };
+      cell.ondragover = e => { e.preventDefault(); if (dragged && dragged !== cell) cell.classList.add('drag-over'); };
+      cell.ondragleave = () => cell.classList.remove('drag-over');
+      cell.ondrop = e => {
+        e.preventDefault(); cell.classList.remove('drag-over');
+        if (!dragged || dragged === cell) return;
+        const cellsNow = Array.from(grid.querySelectorAll('.placement-cell'));
+        const from = cellsNow.indexOf(dragged), to = cellsNow.indexOf(cell);
+        if (from < to) grid.insertBefore(dragged, cell.nextSibling); else grid.insertBefore(dragged, cell);
+        savePlacementOrder(Array.from(grid.querySelectorAll('.placement-cell')).map(x => x.dataset.el));
+        refitAll();
+        showToast('Element placement saved', 'fa-arrows-alt');
+      };
+    });
+  }
+
 
   const DEFAULT_BARCODE_HEIGHT = 48;
   const DEFAULT_QR_SIZE = 84;
@@ -2265,12 +2316,10 @@
   function getLocalUsers() { const u = lsGet(USERS_KEY, []); return Array.isArray(u) ? u : []; }
   function saveLocalUsers(users) { lsSet(USERS_KEY, users); }
   async function ensureLocalAdmin() {
-    let users = getLocalUsers();
-    if (!users.length) {
-      const salt = randomSalt();
-      users = [{ username: 'admin', email: 'admin@lynkkar.local', salt, hash: await hashPassword('Pakistan@5757', salt), role: 'admin', status: 'active', subscription: 'business', trialStart: null }];
-    }
-    saveLocalUsers(users);
+    // Production security: there is no hidden/local admin account.
+    // Firebase/Firestore is the only source of truth for administrator access.
+    const users = getLocalUsers();
+    saveLocalUsers(Array.isArray(users) ? users : []);
   }
 
   // ==================== FIRESTORE USER DOC ====================
@@ -2280,16 +2329,14 @@
     const snap = await ref.get();
     if (!snap.exists) {
       const now = Date.now();
-      const trialStart = now;
-      const trialEnd = now + TRIAL_DAYS * 24 * 60 * 60 * 1000;
       const doc = {
         email: data.email || '',
         name: data.name || '',
         role: 'user',
         status: 'pending',           // pending | active | rejected
         subscription: 'trial',       // trial | starter | pro | business | expired
-        trialStart,
-        trialEnd,
+        trialStart: null,
+        trialEnd: null,
         subscriptionStart: null,
         subscriptionEnd: null,
         createdAt: now,
@@ -2309,23 +2356,25 @@
   }
 
   function computeSubscriptionState(u) {
-    if (!u) return { label: 'Unknown', cls: 'expired', text: 'No account', canUse: false };
+    if (!u) return { label: 'Unknown', cls: 'expired', text: 'No account', canUse: false, end: 0 };
     const now = Date.now();
-    if (u.status === 'pending') return { label: 'Pending approval', cls: 'pending', text: 'Waiting for admin approval', canUse: false };
-    if (u.status === 'rejected') return { label: 'Rejected', cls: 'expired', text: 'Account rejected. Contact support.', canUse: false };
+    if (u.role === 'admin') return { label: 'Administrator', cls: 'active', text: 'Full administrator access', canUse: true, end: 0 };
+    if (u.status === 'pending') return { label: 'Pending approval', cls: 'pending', text: 'Waiting for admin approval', canUse: false, end: 0 };
+    if (u.status === 'rejected') return { label: 'Rejected', cls: 'expired', text: 'Account rejected. Contact support.', canUse: false, end: 0 };
+    if (u.status !== 'active') return { label: 'Inactive', cls: 'expired', text: 'Account is not active.', canUse: false, end: 0 };
     if (u.subscription === 'trial') {
-      const end = u.trialEnd || 0;
-      if (now > end) return { label: 'Trial expired', cls: 'expired', text: 'Your free trial has ended. Subscribe to continue.', canUse: false };
-      const daysLeft = Math.ceil((end - now) / (24 * 60 * 60 * 1000));
-      return { label: 'Free trial', cls: 'trial', text: `Trial active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`, canUse: true };
+      const end = Number(u.trialEnd || 0);
+      if (!end || now >= end) return { label: 'Trial expired', cls: 'expired', text: 'Your free trial has ended. Subscribe to continue.', canUse: false, end };
+      const daysLeft = Math.ceil((end - now) / 86400000);
+      return { label: 'Free trial', cls: 'trial', text: `Trial active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`, canUse: true, end };
     }
-    if (u.subscription && u.subscription !== 'trial' && u.subscription !== 'expired') {
-      const end = u.subscriptionEnd || 0;
-      if (now > end) return { label: 'Subscription expired', cls: 'expired', text: 'Your subscription has expired. Renew to continue.', canUse: false };
-      const daysLeft = Math.ceil((end - now) / (24 * 60 * 60 * 1000));
-      return { label: u.subscription.charAt(0).toUpperCase() + u.subscription.slice(1) + ' plan', cls: 'active', text: `Active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining`, canUse: true };
+    if (u.subscription && u.subscription !== 'expired') {
+      const end = Number(u.subscriptionEnd || 0);
+      if (!end || now >= end) return { label: 'Subscription expired', cls: 'expired', text: 'Your subscription has expired. Renew to continue.', canUse: false, end };
+      const daysLeft = Math.ceil((end - now) / 86400000);
+      return { label: u.subscription.charAt(0).toUpperCase() + u.subscription.slice(1) + ' plan', cls: 'active', text: `Active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining`, canUse: true, end };
     }
-    return { label: 'Inactive', cls: 'expired', text: 'No active subscription.', canUse: false };
+    return { label: 'Inactive', cls: 'expired', text: 'No active subscription.', canUse: false, end: 0 };
   }
 
   function isSubscriptionActive(u) {
@@ -2337,14 +2386,74 @@
   const loginEmail = $('loginEmail'), loginPass = $('loginPass');
   const loginError = $('loginError'), loginErrorMsg = $('loginErrorMsg'), loginBtn = $('loginBtn');
 
+  let subscriptionTicker = null;
+  function ensureLockOverlay() {
+    let el = $('accountLockOverlay');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'accountLockOverlay';
+    el.className = 'account-lock-overlay';
+    el.innerHTML = `<div class="account-lock-card">
+      <div class="lock-icon"><i class="fas fa-lock"></i></div>
+      <h2 id="accountLockTitle">Dashboard Locked</h2>
+      <p id="accountLockText">Your account needs approval or an active subscription.</p>
+      <div id="accountLockCountdown" class="lock-countdown"></div>
+      <button id="accountLockAction" class="btn btn-primary" style="width:auto;padding:10px 20px;">Back to Sign In</button>
+      <div class="main-admin-note">Contact the LynkKar administrator to approve your account or activate a plan.</div>
+    </div>`;
+    document.body.appendChild(el);
+    $('accountLockAction').onclick = () => { el.classList.remove('show'); showLogin(); };
+    return el;
+  }
+  function lockDashboard(title, text) {
+    const overlay = ensureLockOverlay();
+    $('accountLockTitle').innerText = title || 'Dashboard Locked';
+    $('accountLockText').innerText = text || 'Your account needs approval or an active subscription.';
+    $('accountLockCountdown').innerText = '';
+    overlay.classList.add('show');
+    loginScreen.classList.remove('hidden');
+    dashboardApp.classList.add('hidden');
+  }
+  async function denyAndSignOut(title, text) {
+    lockDashboard(title, text);
+    if (firebaseReady && fbAuth.currentUser) { try { await fbAuth.signOut(); } catch (e) {} }
+    currentUser = null;
+  }
+  function formatRemaining(ms) {
+    if (ms <= 0) return '00:00:00';
+    const total = Math.floor(ms / 1000), d = Math.floor(total / 86400), h = Math.floor((total % 86400) / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+    return `${d > 0 ? d + 'd ' : ''}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  function startSubscriptionTicker() {
+    clearInterval(subscriptionTicker);
+    subscriptionTicker = setInterval(async () => {
+      if (!currentUser || currentUser.role === 'admin') return;
+      const state = computeSubscriptionState(currentUser);
+      const countdown = $('subscriptionCountdown');
+      if (countdown && state.end) countdown.innerText = `Time remaining: ${formatRemaining(state.end - Date.now())}`;
+      if (!state.canUse && currentUser.status !== 'pending') {
+        clearInterval(subscriptionTicker);
+        await denyAndSignOut(state.label, state.text);
+      }
+    }, 1000);
+  }
+
   function showDashboard() {
+    const state = computeSubscriptionState(currentUser);
+    if (!currentUser || !state.canUse) {
+      if (currentUser?.status === 'pending') lockDashboard('Approval Required', 'Your account has been created but is waiting for administrator approval.');
+      else if (currentUser) lockDashboard(state.label, state.text);
+      return;
+    }
+    ensureLockOverlay().classList.remove('show');
     loginScreen.classList.add('hidden');
     dashboardApp.classList.remove('hidden');
+    startSubscriptionTicker();
     setTimeout(() => {
       updatePreview(); applyStickerSize(); renderImagePreview(); renderUserList();
       initPlacementGrid(); applyTextSizes(); applyCodeSizes(); renderGrid();
       renderCustomerPanel();
-      if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'admin@lynkkar.local')) {
+      if (currentUser && currentUser.role === 'admin') {
         $('adminTabBtn').style.display = '';
         renderAdminCustomerPanel();
       } else {
@@ -2354,11 +2463,13 @@
     }, 30);
   }
   function showLogin() {
+    clearInterval(subscriptionTicker);
     loginScreen.classList.remove('hidden');
     dashboardApp.classList.add('hidden');
     loginPass.value = '';
     loginError.classList.remove('show');
   }
+
   function updateUserBadge() {
     const nameEl = $('userBadgeName');
     if (currentUser) {
@@ -2375,16 +2486,6 @@
         // Auth state listener will handle the rest
         return { ok: true };
       } catch (err) {
-        // If Firebase user doesn't exist yet but local admin exists, fall back
-        const localUsers = getLocalUsers();
-        const local = localUsers.find(u => (u.email || u.username) === email);
-        if (local) {
-          const h = await hashPassword(password, local.salt);
-          if (h === local.hash) {
-            currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
-            return { ok: true, local: true };
-          }
-        }
         return { ok: false, error: err.message };
       }
     } else {
@@ -2394,8 +2495,7 @@
       if (!local) return { ok: false, error: 'No account found' };
       const h = await hashPassword(password, local.salt);
       if (h !== local.hash) return { ok: false, error: 'Incorrect password' };
-      currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
-      return { ok: true, local: true };
+      return { ok: false, error: 'Firebase is required. Please try again when Firebase is connected.' };
     }
   }
 
@@ -2512,27 +2612,33 @@
     setFirebaseStatus(true);
     fbAuth.onAuthStateChanged(async (user) => {
       if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
-      if (user) {
+      if (!user) { currentUser = null; showLogin(); return; }
+      try {
         const doc = await ensureUserDoc(user.uid, { email: user.email, name: user.displayName || user.email });
-        if (!doc) { showLogin(); return; }
+        if (!doc) { await denyAndSignOut('Account unavailable', 'Your account profile could not be loaded.'); return; }
         currentUser = { uid: user.uid, email: user.email, name: user.displayName || doc.name || user.email, ...doc };
-        // Realtime updates
-        userListenerUnsub = fbDb.collection('users').doc(user.uid).onSnapshot(snap => {
-          if (snap.exists) {
-            currentUser = { uid: user.uid, email: user.email, name: user.displayName || snap.data().name || user.email, ...snap.data() };
-            updateUserBadge();
-            renderCustomerPanel();
-            if (currentUser.role === 'admin') { $('adminTabBtn').style.display = ''; renderAdminCustomerPanel(); }
-            else $('adminTabBtn').style.display = 'none';
+        userListenerUnsub = fbDb.collection('users').doc(user.uid).onSnapshot(async snap => {
+          if (!snap.exists) return;
+          currentUser = { uid: user.uid, email: user.email, name: user.displayName || snap.data().name || user.email, ...snap.data() };
+          updateUserBadge(); renderCustomerPanel();
+          if (currentUser.role === 'admin') { $('adminTabBtn').style.display = ''; renderAdminCustomerPanel(); }
+          else $('adminTabBtn').style.display = 'none';
+          const state = computeSubscriptionState(currentUser);
+          if (currentUser.role === 'admin' || state.canUse) {
+            if (dashboardApp.classList.contains('hidden')) showDashboard();
+          } else if (currentUser.status === 'pending') {
+            await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
+          } else {
+            await denyAndSignOut(state.label, state.text);
           }
         });
-        if (currentUser.status === 'pending') {
-          showToast('Your account is pending admin approval. Some features may be restricted.', 'fa-clock');
-        }
-        showDashboard();
-      } else {
-        currentUser = null;
-        showLogin();
+        const state = computeSubscriptionState(currentUser);
+        if (currentUser.role === 'admin' || state.canUse) showDashboard();
+        else if (currentUser.status === 'pending') await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
+        else await denyAndSignOut(state.label, state.text);
+      } catch (err) {
+        console.error(err);
+        await denyAndSignOut('Account error', 'We could not verify your account status. Please contact the administrator.');
       }
     });
   }
@@ -2682,7 +2788,7 @@
   });
   $('addUserBtn').addEventListener('click', async () => {
     if (!currentUser || currentUser.role !== 'admin') return showToast('Only admins can add local users', 'fa-exclamation-triangle');
-    const username = $('newUsername').value.trim(), password = $('newUserPassword').value, role = $('newUserRole').value;
+    const username = $('newUsername').value.trim(), password = $('newUserPassword').value, role = 'user';
     if (!username || !password) return showToast('Enter username and password', 'fa-exclamation-triangle');
     if (password.length < 4) return showToast('Password must be at least 4 characters', 'fa-exclamation-triangle');
     const users = getLocalUsers();
@@ -2742,7 +2848,7 @@
 
     host.innerHTML = `
       <div class="sub-status-banner ${bannerCls}">
-        <div class="ssb-text"><i class="fas ${bannerIcon}"></i> <span>${escapeHtml(bannerText)}</span></div>
+        <div class="ssb-text"><i class="fas ${bannerIcon}"></i> <span>${escapeHtml(bannerText)}</span>${state.end && state.canUse ? '<span id="subscriptionCountdown" style="font-weight:800;margin-left:8px;"></span>' : ''}</div>
         ${actionHtml}
       </div>
 
@@ -2847,7 +2953,9 @@
                     <td><div class="action-btns">
                       ${u.status === 'pending' ? `<button class="approve" data-act="approve" data-uid="${escapeHtml(u.uid)}">Approve</button>` : ''}
                       ${u.status === 'pending' ? `<button class="reject" data-act="reject" data-uid="${escapeHtml(u.uid)}">Reject</button>` : ''}
-                      ${u.status === 'active' ? `<button data-act="extend" data-uid="${escapeHtml(u.uid)}">+30d</button>` : ''}
+                      ${u.status === 'active' ? `<button data-act="activate" data-plan="starter" data-uid="${escapeHtml(u.uid)}">Starter 30d</button>` : ''}
+                      ${u.status === 'active' ? `<button data-act="activate" data-plan="pro" data-uid="${escapeHtml(u.uid)}">Pro 30d</button>` : ''}
+                      ${u.status === 'active' ? `<button data-act="activate" data-plan="business" data-uid="${escapeHtml(u.uid)}">Business 30d</button>` : ''}
                       ${u.status === 'active' ? `<button data-act="expire" data-uid="${escapeHtml(u.uid)}">Expire</button>` : ''}
                       ${u.status === 'expired' || u.status === 'rejected' ? `<button class="approve" data-act="approve" data-uid="${escapeHtml(u.uid)}">Reactivate</button>` : ''}
                     </div></td>
@@ -2857,7 +2965,7 @@
             </table>
           </div>
           <div style="margin-top:12px; font-size:0.72rem; color:#64748b; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <span><i class="fas fa-info-circle"></i> Approve new signups, extend subscriptions by 30 days, or expire accounts.</span>
+            <span><i class="fas fa-info-circle"></i> Approve new signups, activate paid plans after payment, or expire accounts.</span>
             <button class="btn btn-outline btn-sm" id="refreshCustomersBtn" style="width:auto;padding:6px 12px;"><i class="fas fa-sync"></i> Refresh</button>
           </div>
         `;
@@ -2874,17 +2982,21 @@
               const ref = fbDb.collection('users').doc(uid);
               const now = Date.now();
               if (act === 'approve') {
-                // Activate + start subscription 30 days (or keep trial if no sub set)
+                // Approval starts the 3-day trial. It never grants a paid plan.
                 const snap = await ref.get();
                 const data = snap.data() || {};
                 const patch = { status: 'active', updatedAt: now };
-                if (!data.subscription || data.subscription === 'trial') {
-                  // keep trial if still valid, otherwise give 30 days starter
-                  if (data.trialEnd && now < data.trialEnd) { /* trial still valid */ }
-                  else { patch.subscription = 'starter'; patch.subscriptionStart = now; patch.subscriptionEnd = now + 30 * 24 * 60 * 60 * 1000; }
+                if (data.subscription === 'trial' && !data.trialStart) {
+                  patch.trialStart = now;
+                  patch.trialEnd = now + TRIAL_DAYS * 24 * 60 * 60 * 1000;
                 }
                 await ref.update(patch);
-                showToast('Customer approved', 'fa-check-circle');
+                showToast('Customer approved — 3-day trial started', 'fa-check-circle');
+              } else if (act === 'activate') {
+                const plan = btn.dataset.plan;
+                if (!['starter','pro','business'].includes(plan)) throw new Error('Invalid plan');
+                await ref.update({ subscription: plan, subscriptionStart: now, subscriptionEnd: now + 30 * 24 * 60 * 60 * 1000, status: 'active', updatedAt: now });
+                showToast(`${plan.charAt(0).toUpperCase()+plan.slice(1)} plan activated for 30 days`, 'fa-crown');
               } else if (act === 'reject') {
                 await ref.update({ status: 'rejected', subscription: 'expired', updatedAt: now });
                 showToast('Customer rejected', 'fa-user-slash');
@@ -4918,27 +5030,16 @@
     renderImagePreview();
     updateSelectionUI();
     renderCustomerPanel();
-
-    // Firebase auth listener
+    initPlacementGrid();
     initAuthListener();
-
-    // If firebase isn't ready, fall back to local session
     if (!firebaseReady) {
       setFirebaseStatus(false);
-      const s = sessionStorage.getItem(SESSION_KEY);
-      if (s) {
-        const local = getLocalUsers().find(u => (u.username || u.email) === s);
-        if (local) {
-          currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
-          showDashboard();
-          return;
-        }
-      }
       showLogin();
+      loginErrorMsg.innerText = 'Firebase connection is required for secure sign-in.';
+      loginError.classList.add('show');
       setTimeout(() => loginEmail.focus(), 300);
     } else {
       setFirebaseStatus(true);
-      // auth listener will handle routing
     }
   })();
 </script>
