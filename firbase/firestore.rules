@@ -3,15 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
-    }
-
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
       return signedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-
     function isUsableAccount(userId) {
       let u = get(/databases/$(database)/documents/users/$(userId)).data;
       return u.status == 'active' && (
@@ -21,22 +17,24 @@ service cloud.firestore {
       );
     }
 
+    // Public pricing/feature configuration. It contains no secrets.
+    match /settings/subscriptions {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /users/{userId} {
-      // A new account can only create itself as a regular pending user.
       allow create: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.role == 'user'
         && request.resource.data.status == 'pending'
         && request.resource.data.subscription == 'trial';
 
-      // A user can read only their own account; the main admin can read all accounts.
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
 
-      // The main admin may manage user status/subscription, but nobody may create
-      // or change another administrator through the web app.
+      // Admin may manage customer status/subscription/usage, but role is immutable.
       allow update: if (
-          isAdmin()
-          && request.resource.data.role == resource.data.role
+          isAdmin() && request.resource.data.role == resource.data.role
         ) || (
           signedIn()
           && request.auth.uid == userId
@@ -47,9 +45,13 @@ service cloud.firestore {
           && request.resource.data.trialEnd == resource.data.trialEnd
           && request.resource.data.subscriptionStart == resource.data.subscriptionStart
           && request.resource.data.subscriptionEnd == resource.data.subscriptionEnd
+          && (
+            request.resource.data.labelsGenerated >= resource.data.labelsGenerated
+            || request.resource.data.usageMonth != resource.data.usageMonth
+            || !('labelsGenerated' in resource.data)
+          )
         );
 
-      // Prevent the main admin from being deleted from the app.
       allow delete: if isAdmin() && resource.data.role != 'admin';
 
       match /projects/{projectId} {
@@ -58,7 +60,6 @@ service cloud.firestore {
       }
     }
 
-    // No other collections are accessible from the client.
     match /{document=**} {
       allow read, write: if false;
     }
