@@ -60,6 +60,23 @@ service cloud.firestore {
       }
     }
 
+    // Private label library: every account has its own label records.
+    // A user can only read/write labels inside their own users/{uid}/labels collection.
+    match /users/{userId}/labels/{labelId} {
+      allow read: if signedIn()
+        && request.auth.uid == userId
+        && isUsableAccount(userId);
+
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && isUsableAccount(userId)
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      allow delete: if signedIn()
+        && request.auth.uid == userId
+        && isUsableAccount(userId);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
