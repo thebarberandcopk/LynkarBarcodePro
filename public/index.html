@@ -2560,6 +2560,8 @@
   const verifyMsg = $('verifyMsg');
   let verificationUser = null;
   let verificationPoller = null;
+  // Prevent Firebase's auth-state callback from racing the signup flow.
+  let signupInProgress = false;
 
   function showVerifyMsg(msg, isError) {
     verifyMsg.innerText = msg;
@@ -2871,18 +2873,22 @@
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
     if (firebaseReady) {
+      signupInProgress = true;
       try {
         const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
         await cred.user.updateProfile({ displayName: name });
-        await ensureUserDoc(cred.user.uid, { email, name });
+        const profile = await ensureUserDoc(cred.user.uid, { email, name });
+        if (!profile) throw new Error('Could not create your account profile in Firebase. Please try again.');
         await sendVerificationEmail(cred.user);
+        verificationUser = cred.user;
         closeSignup();
         $('signupForm').reset();
         openVerifyModal(email);
         showVerifyMsg('Account created. Check your inbox and click the verification link to activate your trial.', false);
       } catch (err) {
-        showSignupMsg('Could not create account: ' + err.message, true);
+        showSignupMsg('Could not create account: ' + (err.code ? err.code + ': ' : '') + (err.message || 'Please try again.'), true);
       } finally {
+        signupInProgress = false;
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
       }
     } else {
@@ -2896,6 +2902,7 @@
     if (!firebaseReady) { setFirebaseStatus(false); return; }
     setFirebaseStatus(true);
     fbAuth.onAuthStateChanged(async (user) => {
+      if (signupInProgress) return;
       if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
       if (!user) {
         currentUser = null;
