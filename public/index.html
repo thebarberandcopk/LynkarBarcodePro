@@ -2605,6 +2605,10 @@
     if (!snap.exists) return null;
     const data = snap.data();
     if (data.role === 'admin') return { uid:user.uid, ...data };
+    // Firebase emailVerified is updated by reload(), but Firestore security
+    // rules read the email_verified claim from the ID token. Force-refresh
+    // the token so the activation write is authorized immediately.
+    await user.getIdToken(true);
     if (data.status === 'active' && data.subscription === 'trial' && data.trialStart) return { uid:user.uid, ...data };
     if (data.status === 'active' && data.subscription !== 'trial') return { uid:user.uid, ...data };
     const now = Date.now(), trialEnd = now + TRIAL_DAYS * 86400000;
