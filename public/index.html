@@ -119,6 +119,11 @@
     .auth-msg.show { display: block; }
     .auth-msg.error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
     .auth-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+    .verify-modal-icon { width:64px; height:64px; border-radius:18px; background:rgba(242,133,0,.12); color:var(--secondary); display:flex; align-items:center; justify-content:center; font-size:1.7rem; margin:0 auto 14px; }
+    .verify-modal-note { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:11px 12px; font-size:.76rem; line-height:1.55; color:#475569; margin:14px 0; }
+    .verify-email-address { font-weight:800; color:var(--primary); word-break:break-word; }
+    .verify-actions { display:flex; gap:10px; margin-top:12px; }
+    .verify-actions .btn { flex:1; }
 
     /* ============ ANIMATED DASHBOARD PREVIEW (login screen) ============ */
     .login-features {
@@ -1319,8 +1324,27 @@
     </form>
     <div style="margin-top:14px; font-size:0.72rem; color:#94a3b8; text-align:center; line-height:1.5;">
       By signing up you agree to our Terms of Service.<br>
-      Your account will be reviewed by an admin before activation.
+      Verify your email to activate your account and start your 3-day free trial. No admin approval required.
     </div>
+  </div>
+</div>
+
+<!-- ============ EMAIL VERIFICATION MODAL ============ -->
+<div class="auth-modal-overlay" id="verifyEmailModal" aria-hidden="true">
+  <div class="auth-modal" style="max-width:500px; text-align:center;">
+    <button class="auth-close" id="verifyCloseBtn" title="Close"><i class="fas fa-times"></i></button>
+    <div class="verify-modal-icon"><i class="fas fa-envelope-circle-check"></i></div>
+    <h2 style="justify-content:center;"><i class="fas fa-shield-alt" style="color:var(--secondary);"></i> Verify Your Email</h2>
+    <p class="auth-sub" style="margin-bottom:10px;">We sent a verification link to</p>
+    <div class="verify-email-address" id="verifyEmailAddress">your email</div>
+    <div class="verify-modal-note">Click the link in the email to verify your address. <strong>Your 3-day free trial starts automatically when verification is confirmed.</strong> No admin approval is required.</div>
+    <div class="auth-msg" id="verifyMsg"></div>
+    <div class="verify-actions">
+      <button type="button" class="btn btn-outline" id="verifySignOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      <button type="button" class="btn btn-success" id="verifyCheckBtn"><i class="fas fa-check-circle"></i> I've Verified — Check</button>
+    </div>
+    <button type="button" class="btn btn-outline" id="verifyResendBtn" style="width:100%; margin-top:10px;"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
+    <div style="margin-top:12px; font-size:.68rem; color:#94a3b8;">Check your spam/junk folder if you don't see the email.</div>
   </div>
 </div>
 
@@ -2530,6 +2554,111 @@
     return computeSubscriptionState(u).canUse;
   }
 
+  // ==================== EMAIL VERIFICATION ====================
+  const verifyEmailModal = $('verifyEmailModal');
+  const verifyEmailAddress = $('verifyEmailAddress');
+  const verifyMsg = $('verifyMsg');
+  let verificationUser = null;
+  let verificationPoller = null;
+
+  function showVerifyMsg(msg, isError) {
+    verifyMsg.innerText = msg;
+    verifyMsg.className = 'auth-msg show ' + (isError ? 'error' : 'success');
+  }
+  function openVerifyModal(email) {
+    verificationUser = fbAuth.currentUser || verificationUser;
+    verifyEmailAddress.innerText = email || verificationUser?.email || 'your email';
+    verifyMsg.className = 'auth-msg';
+    verifyEmailModal.classList.add('show');
+    verifyEmailModal.setAttribute('aria-hidden', 'false');
+    clearInterval(verificationPoller);
+    verificationPoller = setInterval(async () => {
+      const u = fbAuth.currentUser || verificationUser;
+      if (!u || !verifyEmailModal.classList.contains('show')) return;
+      try {
+        await u.reload();
+        if (fbAuth.currentUser?.emailVerified) {
+          clearInterval(verificationPoller); verificationPoller = null;
+          await checkEmailVerification();
+        }
+      } catch (e) {}
+    }, 4000);
+  }
+  function closeVerifyModal() {
+    verifyEmailModal.classList.remove('show');
+    verifyEmailModal.setAttribute('aria-hidden', 'true');
+    clearInterval(verificationPoller); verificationPoller = null;
+  }
+  function verificationActionSettings() {
+    return { url: window.location.origin + window.location.pathname, handleCodeInApp: false };
+  }
+  async function sendVerificationEmail(user) {
+    if (!user) throw new Error('No signed-in account found.');
+    await user.sendEmailVerification(verificationActionSettings());
+  }
+  async function activateVerifiedTrial(user) {
+    if (!firebaseReady || !user || !user.emailVerified) return null;
+    const ref = fbDb.collection('users').doc(user.uid);
+    const snap = await ref.get();
+    if (!snap.exists) return null;
+    const data = snap.data();
+    if (data.role === 'admin') return { uid:user.uid, ...data };
+    if (data.status === 'active' && data.subscription === 'trial' && data.trialStart) return { uid:user.uid, ...data };
+    if (data.status === 'active' && data.subscription !== 'trial') return { uid:user.uid, ...data };
+    const now = Date.now(), trialEnd = now + TRIAL_DAYS * 86400000;
+    await ref.update({ status:'active', subscription:'trial', trialStart:now, trialEnd, updatedAt:now });
+    const fresh = await ref.get();
+    return { uid:user.uid, ...fresh.data() };
+  }
+  async function checkEmailVerification() {
+    const user = fbAuth.currentUser || verificationUser;
+    if (!user) { showVerifyMsg('Please sign in again to continue.', true); return false; }
+    const btn = $('verifyCheckBtn'); btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    try {
+      await user.reload();
+      const refreshed = fbAuth.currentUser;
+      if (!refreshed || !refreshed.emailVerified) {
+        showVerifyMsg('Your email is not verified yet. Open the verification link from your inbox, then check again.', true);
+        return false;
+      }
+      const doc = await activateVerifiedTrial(refreshed);
+      if (!doc) throw new Error('Your account profile could not be loaded.');
+      currentUser = { uid:refreshed.uid, email:refreshed.email, name:refreshed.displayName || doc.name || refreshed.email, ...doc };
+      closeVerifyModal();
+      loadLocalLabelsForCurrentUser();
+      await hydrateCloudProject(refreshed.uid);
+      setLoginProcessing(false);
+      showDashboard();
+      showToast('Email verified — your 3-day trial is now active!', 'fa-check-circle');
+      return true;
+    } catch (err) {
+      showVerifyMsg('Verification check failed: ' + (err.message || 'Please try again.'), true);
+      return false;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-circle"></i> I\'ve Verified — Check';
+    }
+  }
+  $('verifyCheckBtn').addEventListener('click', checkEmailVerification);
+  $('verifyResendBtn').addEventListener('click', async () => {
+    const user = fbAuth.currentUser || verificationUser;
+    if (!user) { showVerifyMsg('Please sign in again to resend the email.', true); return; }
+    const btn = $('verifyResendBtn'); btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    try { await sendVerificationEmail(user); showVerifyMsg('Verification email sent again. Please check your inbox.', false); }
+    catch (err) { showVerifyMsg('Could not resend email: ' + (err.message || 'Please try again later.'), true); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Resend Verification Email'; }
+  });
+  $('verifySignOutBtn').addEventListener('click', async () => {
+    try { if (firebaseReady && fbAuth.currentUser) await fbAuth.signOut(); } catch (e) {}
+    verificationUser = null;
+    closeVerifyModal();
+    showLogin();
+  });
+  $('verifyCloseBtn').addEventListener('click', () => {});
+  verifyEmailModal.addEventListener('click', (e) => { if (e.target === verifyEmailModal) {} });
+
   // ==================== LOGIN ====================
   const loginScreen = $('loginScreen'), dashboardApp = $('dashboardApp');
   const loginEmail = $('loginEmail'), loginPass = $('loginPass');
@@ -2746,37 +2875,18 @@
         const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
         await cred.user.updateProfile({ displayName: name });
         await ensureUserDoc(cred.user.uid, { email, name });
-        // Sign out immediately so they must wait for admin approval
-        await fbAuth.signOut();
-        showSignupMsg('Account created! An admin will review and approve your account shortly.', false);
-        showToast('Account created — awaiting admin approval', 'fa-check-circle');
-        setTimeout(closeSignup, 2500);
+        await sendVerificationEmail(cred.user);
+        closeSignup();
         $('signupForm').reset();
+        openVerifyModal(email);
+        showVerifyMsg('Account created. Check your inbox and click the verification link to activate your trial.', false);
       } catch (err) {
         showSignupMsg('Could not create account: ' + err.message, true);
       } finally {
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
       }
     } else {
-      // Offline / local signup
-      const users = getLocalUsers();
-      if (users.find(u => (u.email || u.username) === email)) {
-        showSignupMsg('An account with this email already exists.', true);
-        btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
-        return;
-      }
-      const salt = randomSalt();
-      const now = Date.now();
-      users.push({
-        username: name, email, salt, hash: await hashPassword(pass, salt),
-        role: 'user', status: 'pending',
-        subscription: 'trial', trialStart: null, trialEnd: null
-      });
-      saveLocalUsers(users);
-      showSignupMsg('Account created! An admin will approve your account shortly.', false);
-      showToast('Account created — awaiting admin approval', 'fa-check-circle');
-      setTimeout(closeSignup, 2500);
-      $('signupForm').reset();
+      showSignupMsg('Email verification requires a live Firebase connection. Please reconnect and try again.', true);
       btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
     }
   });
@@ -2809,11 +2919,23 @@
         renderCustomerPanel();
         applyPlanRestrictions();
 
+        // Email verification is the activation gate for normal users.
+        if (currentUser.role !== 'admin' && !user.emailVerified) {
+          setLoginProcessing(false);
+          showLogin();
+          openVerifyModal(user.email);
+          return;
+        }
+
+        if (currentUser.role !== 'admin' && user.emailVerified && currentUser.status === 'pending') {
+          const activated = await activateVerifiedTrial(user);
+          if (activated) currentUser = { ...currentUser, ...activated };
+        }
+
         const state = computeSubscriptionState(currentUser);
         if (currentUser.role !== 'admin' && !state.canUse) {
           setLoginProcessing(false);
-          if (currentUser.status === 'pending') await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
-          else await denyAndSignOut(state.label, state.text);
+          await denyAndSignOut(state.label, state.text);
           return;
         }
 
