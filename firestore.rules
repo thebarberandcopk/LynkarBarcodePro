@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isUsableAccount(userId) {
+      let u = get(/databases/$(database)/documents/users/$(userId)).data;
+      return u.status == 'active' && (
+        u.role == 'admin' ||
+        (u.subscription == 'trial' && u.trialEnd > request.time.toMillis()) ||
+        (u.subscription != 'trial' && u.subscription != 'expired' && u.subscriptionEnd > request.time.toMillis())
+      );
+    }
+
+    match /users/{userId} {
+      // A new account can only create itself as a regular pending user.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.subscription == 'trial';
+
+      // A user can read only their own account; the main admin can read all accounts.
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+
+      // The main admin may manage user status/subscription, but nobody may create
+      // or change another administrator through the web app.
+      allow update: if (
+          isAdmin()
+          && request.resource.data.role == resource.data.role
+        ) || (
+          signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.subscription == resource.data.subscription
+          && request.resource.data.trialStart == resource.data.trialStart
+          && request.resource.data.trialEnd == resource.data.trialEnd
+          && request.resource.data.subscriptionStart == resource.data.subscriptionStart
+          && request.resource.data.subscriptionEnd == resource.data.subscriptionEnd
+        );
+
+      // Prevent the main admin from being deleted from the app.
+      allow delete: if isAdmin() && resource.data.role != 'admin';
+
+      match /projects/{projectId} {
+        allow read, create, update, delete: if isAdmin()
+          || (signedIn() && request.auth.uid == userId && isUsableAccount(userId));
+      }
+    }
+
+    // No other collections are accessible from the client.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
