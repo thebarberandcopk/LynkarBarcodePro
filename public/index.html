@@ -1208,7 +1208,23 @@
     .login-processing.show { display:flex; }
     .login-processing-card { background:#fff; border-radius:16px; padding:24px 30px; box-shadow:0 20px 60px rgba(15,23,42,.25); text-align:center; min-width:260px; }
     .login-processing-card .spinner { font-size:28px; color:var(--secondary); margin-bottom:10px; }
-  </style>
+  
+/* V12 DASHBOARD UI ONLY */
+.dashboard .sidebar-toggle-btn{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;display:grid;place-items:center;cursor:pointer;flex:0 0 34px}
+.dashboard .sidebar-toggle-btn:hover{background:rgba(242,133,0,.16);color:#ffb648}
+.dashboard .sidebar.collapsed{width:78px!important;flex-basis:78px!important}
+.dashboard .sidebar.collapsed .sidebar-scroll{padding-left:10px;padding-right:10px}
+.dashboard .sidebar.collapsed .sh-left span,.dashboard .sidebar.collapsed .user-badge span,.dashboard .sidebar.collapsed .sidebar-footer,.dashboard .sidebar.collapsed .tab-btn .nav-copy,.dashboard .sidebar.collapsed .tab-btn .nav-end,.dashboard .sidebar.collapsed .tab-panel{display:none!important}
+.dashboard .sidebar.collapsed .sidebar-header{justify-content:center}.dashboard .sidebar.collapsed .header-actions{margin:0}.dashboard .sidebar.collapsed .user-badge{width:34px;height:34px;padding:0;justify-content:center;border-radius:9px}.dashboard .sidebar.collapsed .logout-btn{display:none}.dashboard .sidebar.collapsed .sidebar-toggle-btn i{transform:rotate(180deg)}
+.dashboard .sidebar.collapsed .tab-nav{gap:7px}.dashboard .sidebar.collapsed .tab-btn{justify-content:center;padding:12px 0;min-height:44px}.dashboard .sidebar.collapsed .tab-btn i{width:auto;font-size:1rem}
+.dashboard .tab-btn{min-height:46px}.dashboard .tab-btn .nav-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.05}.dashboard .tab-btn .nav-title{font-size:.74rem;font-weight:800}.dashboard .tab-btn .nav-sub{font-size:.55rem;font-weight:600;color:#7f8da0}.dashboard .tab-btn.active .nav-sub{color:#cbd5e1}.dashboard .tab-btn .nav-end{margin-left:auto;color:#64748b;font-size:.55rem}.dashboard .tab-btn.active .nav-end{color:#ffb648}
+.dashboard .workspace-commandbar{display:flex;align-items:center;gap:10px;padding:10px 28px;background:#fbfcfe;border-bottom:1px solid #e5eaf1;flex-wrap:wrap}.dashboard .command-intro{display:flex;align-items:center;gap:9px;margin-right:auto;min-width:185px}.dashboard .command-intro .ci-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#fff4e6;color:#f28500;border:1px solid #f7d7ac}.dashboard .command-intro strong{display:block;font-size:.68rem;font-weight:900;color:#172334}.dashboard .command-intro span{display:block;font-size:.55rem;color:#7b8797;margin-top:2px}.dashboard .command-actions{display:flex;gap:6px;flex-wrap:wrap}.dashboard .quick-action{height:36px;padding:7px 11px;border-radius:9px;border:1px solid #dce4ed;background:#fff;color:#334155;display:inline-flex;align-items:center;gap:7px;font-size:.62rem;font-weight:800;cursor:pointer}.dashboard .quick-action i{color:#f28500}.dashboard .quick-action:hover{border-color:#f1bd78;box-shadow:0 6px 16px rgba(23,35,52,.07)}.dashboard .quick-action.primary{background:#172334;color:#fff;border-color:#172334}.dashboard .quick-action.primary i{color:#ffb648}
+.dashboard .workspace-search-mini{position:relative;min-width:190px;max-width:230px;flex:0 1 230px}.dashboard .workspace-search-mini i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.68rem;color:#94a3b8}.dashboard .workspace-search-mini input{width:100%;height:36px;border:1px solid #dce4ed;border-radius:9px;background:#fff;padding:0 10px 0 29px;font-size:.62rem;font-weight:600;outline:none}.dashboard .workspace-search-mini input:focus{border-color:#f28500;box-shadow:0 0 0 3px rgba(242,133,0,.1)}
+.dashboard .workspace-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}.dashboard .overview-card{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e1e7ee;border-radius:12px;padding:9px 11px;box-shadow:0 7px 20px rgba(23,35,52,.04)}.dashboard .overview-card .oc-icon{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#fff4e6;color:#f28500}.dashboard .overview-card strong{display:block;font-size:.66rem;color:#172334}.dashboard .overview-card span{display:block;font-size:.52rem;color:#7b8797;margin-top:2px}.dashboard .overview-card .oc-value{margin-left:auto;font-size:.67rem;font-weight:900;color:#172334}
+.dashboard .mobile-menu-btn{display:none}.dashboard .sidebar-overlay{display:none}
+@media(max-width:900px){.dashboard .mobile-menu-btn{display:grid;place-items:center;width:36px;height:36px;border:1px solid #dbe3ec;border-radius:9px;background:#fff;color:#172334;cursor:pointer}.dashboard .sidebar{position:fixed;left:0;top:0;bottom:0;width:305px!important;max-width:88vw;transform:translateX(-105%);transition:transform .25s ease;z-index:40;box-shadow:18px 0 45px rgba(15,23,42,.25)}.dashboard .sidebar.mobile-open{transform:translateX(0)}.dashboard .sidebar.collapsed{width:305px!important;transform:translateX(-105%)}.dashboard .sidebar.collapsed.mobile-open{transform:translateX(0)}.dashboard .sidebar.collapsed .sh-left span,.dashboard .sidebar.collapsed .user-badge span,.dashboard .sidebar.collapsed .sidebar-footer,.dashboard .sidebar.collapsed .tab-btn .nav-copy,.dashboard .sidebar.collapsed .tab-btn .nav-end,.dashboard .sidebar.collapsed .tab-panel{display:initial!important}.dashboard .sidebar.collapsed .sidebar-header{justify-content:space-between}.dashboard .sidebar.collapsed .header-actions{margin-left:auto}.dashboard .sidebar.collapsed .user-badge{width:auto;height:auto;padding:6px 9px}.dashboard .sidebar.collapsed .logout-btn{display:flex}.dashboard .sidebar.collapsed .tab-btn{justify-content:flex-start;padding:11px 12px}.dashboard .sidebar.collapsed .tab-btn i{width:18px;font-size:.85rem}.dashboard .sidebar-overlay{display:block;position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:35;opacity:0;pointer-events:none;transition:.2s}.dashboard.mobile-sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}.dashboard .workspace-commandbar{padding:9px 14px}.dashboard .command-intro{width:100%;min-width:0;margin:0}.dashboard .command-actions{width:100%}.dashboard .quick-action{flex:1;justify-content:center;min-width:90px}.dashboard .workspace-search-mini{max-width:none;min-width:0;flex:1 1 100%}.dashboard .workspace-overview{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.dashboard .workspace-overview{grid-template-columns:1fr}.dashboard .quick-action span{display:none}.dashboard .command-intro span{display:none}}
+</style>
 </head>
 <body>
 
@@ -1365,18 +1381,17 @@
         </div>
         <div class="header-actions">
           <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> <span id="userBadgeName">User</span></span>
-          <button class="logout-btn" id="logoutBtn" title="Sign out">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
+          <button class="sidebar-toggle-btn" id="sidebarToggleBtn" type="button" title="Collapse menu" aria-label="Collapse menu"><i class="fas fa-chevron-left"></i></button>
+          <button class="logout-btn" id="logoutBtn" title="Sign out"><i class="fas fa-sign-out-alt"></i></button>
         </div>
       </div>
 
       <div class="tab-nav">
-        <button class="tab-btn active" data-tab="tabMain"><i class="fas fa-tag"></i> <span>Label</span></button>
-        <button class="tab-btn" data-tab="tabBulk"><i class="fas fa-file-csv"></i> <span>Bulk</span></button>
-        <button class="tab-btn" data-tab="tabSettings"><i class="fas fa-cog"></i> <span>Settings</span></button>
-        <button class="tab-btn" data-tab="tabCustomer"><i class="fas fa-crown"></i> <span>Plan</span></button>
-        <button class="tab-btn" data-tab="tabAdmin" id="adminTabBtn" style="display:none;"><i class="fas fa-users-cog"></i> <span>Customers</span></button>
+        <button class="tab-btn active" data-tab="tabMain" title="Label Studio"><i class="fas fa-tag"></i><span class="nav-copy"><span class="nav-title">Label Studio</span><span class="nav-sub">Create &amp; print labels</span></span><span class="nav-end"><i class="fas fa-chevron-right"></i></span></button>
+        <button class="tab-btn" data-tab="tabBulk" title="Bulk Import"><i class="fas fa-file-csv"></i><span class="nav-copy"><span class="nav-title">Bulk Import</span><span class="nav-sub">CSV, Excel &amp; JSON</span></span><span class="nav-end"><i class="fas fa-chevron-right"></i></span></button>
+        <button class="tab-btn" data-tab="tabSettings" title="Settings &amp; Design"><i class="fas fa-cog"></i><span class="nav-copy"><span class="nav-title">Settings &amp; Design</span><span class="nav-sub">Layout &amp; print controls</span></span><span class="nav-end"><i class="fas fa-chevron-right"></i></span></button>
+        <button class="tab-btn" data-tab="tabCustomer" title="Plan &amp; Usage"><i class="fas fa-crown"></i><span class="nav-copy"><span class="nav-title">Plan &amp; Usage</span><span class="nav-sub">Subscription &amp; limits</span></span><span class="nav-end"><i class="fas fa-chevron-right"></i></span></button>
+        <button class="tab-btn" data-tab="tabAdmin" id="adminTabBtn" style="display:none;" title="Customer Management"><i class="fas fa-users-cog"></i><span class="nav-copy"><span class="nav-title">Customers</span><span class="nav-sub">Accounts &amp; subscriptions</span></span><span class="nav-end"><i class="fas fa-chevron-right"></i></span></button>
       </div>
 
       <!-- ===== MAIN TAB ===== -->
@@ -1878,6 +1893,7 @@
 
   <div class="main-content">
     <div class="top-bar">
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" title="Open menu" aria-label="Open menu"><i class="fas fa-bars"></i></button>
       <h2>
         <i class="fas fa-layer-group" style="color: var(--secondary); margin-right: 8px;"></i>
         Label Workspace <span class="badge" id="countDisplay">0</span> <span class="cloud-sync-badge" id="cloudSyncStatus"><i class="fas fa-cloud"></i> Cloud Sync</span>
@@ -1967,7 +1983,14 @@
       </div>
     </div>
 
+    <div class="workspace-commandbar" id="workspaceCommandbar">
+      <div class="command-intro"><div class="ci-icon"><i class="fas fa-wand-magic-sparkles"></i></div><div><strong>Quick Workspace</strong><span>Most-used tools at your fingertips</span></div></div>
+      <div class="command-actions"><button type="button" class="quick-action primary" data-quick="new-label"><i class="fas fa-plus"></i><span>New Label</span></button><button type="button" class="quick-action" data-quick="bulk"><i class="fas fa-file-import"></i><span>Bulk Import</span></button><button type="button" class="quick-action" data-quick="designer"><i class="fas fa-pen-ruler"></i><span>Designer</span></button><button type="button" class="quick-action" data-quick="template"><i class="fas fa-table"></i><span>Template</span></button><button type="button" class="quick-action" data-quick="plan"><i class="fas fa-crown"></i><span>Plan</span></button></div>
+      <div class="workspace-search-mini"><i class="fas fa-search"></i><input type="search" id="workspaceSearchInput" placeholder="Search labels by product, SKU or price…" autocomplete="off"></div>
+    </div><div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="workspace">
+      <div class="workspace-overview"><div class="overview-card"><div class="oc-icon"><i class="fas fa-layer-group"></i></div><div><strong>Labels</strong><span>Current workspace</span></div><span class="oc-value" id="overviewLabelCount">0</span></div><div class="overview-card"><div class="oc-icon"><i class="fas fa-cloud"></i></div><div><strong>Cloud Sync</strong><span>Firebase workspace</span></div><span class="oc-value" id="overviewCloudState">Ready</span></div><div class="overview-card"><div class="oc-icon"><i class="fas fa-shield-halved"></i></div><div><strong>Account</strong><span>Access status</span></div><span class="oc-value" id="overviewAccountState">Active</span></div></div>
       <div class="label-grid" id="labelGrid">
         <div class="empty-state"><i class="fas fa-barcode"></i><span>Configure options and click <strong>"Generate Labels"</strong>.</span></div>
       </div>
@@ -5630,6 +5653,10 @@
       setFirebaseStatus(true);
     }
   })();
+</script>
+<script>
+/* V12 dashboard UI only */
+(function(){const d=document.getElementById("dashboardApp");if(!d)return;const s=d.querySelector(".sidebar"),t=document.getElementById("sidebarToggleBtn"),m=document.getElementById("mobileMenuBtn"),o=document.getElementById("sidebarOverlay"),q=document.getElementById("workspaceSearchInput"),old=document.getElementById("searchLabels");function col(v){s.classList.toggle("collapsed",v);if(t){t.title=v?"Expand menu":"Collapse menu";t.querySelector("i").className=v?"fas fa-chevron-right":"fas fa-chevron-left"}localStorage.setItem("lynkkar_dashboard_sidebar_collapsed",v?"1":"0")}function mob(v){d.classList.toggle("mobile-sidebar-open",v);s.classList.toggle("mobile-open",v)}col(localStorage.getItem("lynkkar_dashboard_sidebar_collapsed")==="1");t?.addEventListener("click",()=>innerWidth<=900?mob(!s.classList.contains("mobile-open")):col(!s.classList.contains("collapsed")));m?.addEventListener("click",()=>mob(true));o?.addEventListener("click",()=>mob(false));d.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>innerWidth<=900?mob(false):s.classList.contains("collapsed")&&col(false)));function tab(id){d.querySelector('.tab-btn[data-tab="'+id+'"]')?.click()}d.querySelectorAll("[data-quick]").forEach(b=>b.addEventListener("click",()=>{let a=b.dataset.quick;if(a==="new-label"){tab("tabMain");setTimeout(()=>document.getElementById("productName")?.focus(),100)}if(a==="bulk"){tab("tabBulk");setTimeout(()=>document.getElementById("csvFileInput")?.click(),100)}if(a==="designer")tab("tabSettings");if(a==="template"){tab("tabBulk");setTimeout(()=>document.getElementById("downloadTemplateBtn")?.click(),100)}if(a==="plan")tab("tabCustomer")}));q?.addEventListener("input",()=>{if(old){old.value=q.value;old.dispatchEvent(new Event("input",{bubbles:true}))}});function stats(){let c=document.getElementById("overviewLabelCount"),src=document.getElementById("countDisplay");if(c&&src)c.textContent=src.textContent.trim();let cl=document.getElementById("overviewCloudState"),cb=document.getElementById("cloudSyncStatus");if(cl&&cb)cl.textContent=cb.textContent.replace(/^[^A-Za-z]+/,"").trim()||"Ready"}setInterval(stats,1200);stats();addEventListener("resize",()=>innerWidth>900&&mob(false))})();
 </script>
 </body>
 </html>
