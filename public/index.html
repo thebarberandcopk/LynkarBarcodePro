@@ -45,81 +45,48 @@
     * { box-sizing: border-box; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; }
     body { margin: 0; background: #eef2f7; color: #1a2634; }
 
-    /* ============ LOGIN ============ */
-    .login-screen {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #1e2b3c 0%, #2c3e50 55%, #f28500 130%);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 10000; padding: 20px;
-    }
-    .login-screen.hidden { display: none; }
-    .login-card {
-      background: #fff; border-radius: 16px; padding: 40px 36px 32px;
-      width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);
-      animation: loginIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
-      position: relative; overflow: hidden;
-    }
-    @keyframes loginIn { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    .login-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
-      background: linear-gradient(90deg, var(--secondary), #ffb648, var(--secondary));
-    }
-    .login-brand { text-align: center; margin-bottom: 20px; }
-    .login-brand .logo-circle {
-      width: 64px; height: 64px; margin: 0 auto 12px;
-      background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      color: var(--secondary); font-size: 1.6rem;
-      box-shadow: 0 8px 20px rgba(30,43,60,0.3);
-    }
-    .login-brand h1 { font-size: 1.35rem; font-weight: 800; color: var(--primary); margin: 0 0 4px; }
-    .login-brand p { font-size: 0.78rem; color: #6b7a8d; margin: 0; font-weight: 500; }
-    .login-field { margin-bottom: 16px; position: relative; }
-    .login-field label {
-      display: block; font-size: 0.72rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      color: #4a5a6e; margin-bottom: 6px;
-    }
-    .login-field .field-wrap { position: relative; display: flex; align-items: center; }
-    .login-field .field-icon { position: absolute; left: 14px; color: #94a3b8; font-size: 0.9rem; pointer-events: none; }
-    .login-field input {
-      width: 100%; padding: 12px 14px 12px 40px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.92rem; background: #f9fbfd; transition: var(--transition);
-      font-family: inherit;
-    }
-    .login-field input:focus {
-      outline: none; border-color: var(--secondary);
-      background: #fff; box-shadow: 0 0 0 4px rgba(242,133,0,0.12);
-    }
-    .login-field .toggle-pass {
-      position: absolute; right: 12px; background: transparent;
-      border: none; color: #94a3b8; cursor: pointer;
-      font-size: 0.9rem; padding: 6px; border-radius: 6px; transition: var(--transition);
-    }
-    .login-field .toggle-pass:hover { color: var(--primary); background: #f1f5f9; }
-    .login-error {
-      background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a;
-      padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
-      margin-bottom: 14px; display: none; align-items: center; gap: 8px;
-    }
-    .login-error.show { display: flex; }
-    .login-btn {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
-      color: #fff; border: none; border-radius: 10px;
-      font-size: 0.95rem; font-weight: 700; cursor: pointer;
-      transition: var(--transition); display: flex; align-items: center; justify-content: center;
-      gap: 8px; letter-spacing: 0.03em;
-    }
-    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(30,43,60,0.35); }
-    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-    .login-btn.secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
-    .login-btn.secondary:hover { background: #f8fafc; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
-    .login-footer { text-align: center; margin-top: 22px; padding-top: 16px; border-top: 1px dashed #e2e8f0; font-size: 0.68rem; color: #94a3b8; line-height: 1.5; }
-    .login-footer .login-whatsapp { display: inline-flex; align-items: center; gap: 5px; color: #25d366; font-weight: 700; text-decoration: none; margin-top: 4px; font-size: 0.72rem; }
-    .login-footer .login-whatsapp:hover { text-decoration: underline; }
+    /* ============ PROFESSIONAL LANDING / AUTH ============ */
+    .login-screen{position:relative;min-height:100vh;overflow-x:hidden;background:#f7f9fc;color:#172334;display:block;padding:0;z-index:10000}
+    .login-screen.hidden{display:none}
+    .landing-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+    .landing-bg::before{content:"";position:absolute;width:680px;height:680px;border-radius:50%;right:-240px;top:-260px;background:radial-gradient(circle,rgba(242,133,0,.16),rgba(242,133,0,0) 68%)}
+    .landing-bg::after{content:"";position:absolute;width:620px;height:620px;border-radius:50%;left:-300px;top:420px;background:radial-gradient(circle,rgba(30,43,60,.10),rgba(30,43,60,0) 68%)}
+    .landing-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(30,43,60,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(30,43,60,.035) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.7),transparent 82%)}
+    .landing-container{position:relative;z-index:2;width:min(1240px,calc(100% - 40px));margin:0 auto}
+    .landing-nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid rgba(30,43,60,.08)}
+    .brand-lockup{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--primary)}
+    .brand-mark{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#172334,#34495e);box-shadow:0 8px 20px rgba(30,43,60,.18);position:relative;overflow:hidden}
+    .brand-mark::after{content:"";position:absolute;inset:-40%;background:linear-gradient(45deg,transparent 42%,rgba(242,133,0,.7) 50%,transparent 58%);animation:brandSweep 4s linear infinite}
+    .brand-mark i{position:relative;z-index:1;color:var(--secondary)}
+    @keyframes brandSweep{to{transform:translate(80%,80%)}}
+    .brand-copy strong{display:block;font-size:.95rem;letter-spacing:-.02em}.brand-copy span{display:block;font-size:.62rem;color:#64748b;margin-top:2px}
+    .landing-navlinks{display:flex;align-items:center;gap:28px}.landing-navlinks a{color:#526276;text-decoration:none;font-size:.78rem;font-weight:700}.landing-navlinks a:hover{color:var(--secondary)}
+    .landing-actions{display:flex;gap:8px}.landing-nav-btn{border:1px solid #d7dee8;background:#fff;color:#233247;padding:10px 15px;border-radius:10px;font-size:.74rem;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(30,43,60,.05)}.landing-nav-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(30,43,60,.10)}.landing-nav-btn.primary{background:var(--secondary);border-color:var(--secondary);color:#fff}
+    .landing-hero{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:58px;padding:74px 0 56px;min-height:570px}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#fff;border:1px solid #e3e8ef;color:#536176;font-size:.67rem;font-weight:800;box-shadow:0 6px 18px rgba(30,43,60,.05);animation:fadeUp .55s ease both}.hero-eyebrow i{color:var(--secondary)}
+    .hero-title{font-size:clamp(2.4rem,5vw,4.5rem);line-height:1.02;letter-spacing:-.055em;color:#142235;margin:18px 0 18px;font-weight:900;animation:fadeUp .65s .05s ease both}.hero-title span{color:var(--secondary)}
+    .hero-copy{font-size:1rem;line-height:1.75;color:#617084;max-width:600px;margin:0 0 26px;animation:fadeUp .65s .1s ease both}
+    .hero-ctas{display:flex;gap:11px;flex-wrap:wrap;animation:fadeUp .65s .15s ease both}.hero-btn{border:0;border-radius:11px;padding:13px 19px;font-size:.78rem;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}.hero-btn.primary{background:#172334;color:#fff;box-shadow:0 12px 25px rgba(23,35,52,.18)}.hero-btn.primary:hover{transform:translateY(-2px)}.hero-btn.secondary{background:#fff;color:#172334;border:1px solid #d8e0e9}.hero-btn.secondary:hover{border-color:var(--secondary)}
+    .hero-trust{display:flex;gap:20px;flex-wrap:wrap;margin-top:28px;color:#748196;font-size:.65rem;font-weight:700}.hero-trust span{display:flex;align-items:center;gap:6px}.hero-trust i{color:#2e7d32}
+    .hero-visual{position:relative;animation:fadeUp .8s .12s ease both}.visual-glow{position:absolute;inset:8% -8% -10%;background:radial-gradient(circle,rgba(242,133,0,.20),transparent 62%);filter:blur(25px)}
+    .product-window{position:relative;background:#172334;border:8px solid #fff;border-radius:22px;box-shadow:0 28px 70px rgba(30,43,60,.23);overflow:hidden;transform:perspective(1100px) rotateY(-4deg) rotateX(2deg);transition:.4s}.product-window:hover{transform:perspective(1100px) rotateY(0) rotateX(0) translateY(-5px)}
+    .product-window video{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#172334}.window-caption{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:#fff;color:#526176;font-size:.64rem;font-weight:800}.window-caption i{color:var(--secondary)}
+    .floating-stat{position:absolute;background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:11px 13px;box-shadow:0 16px 35px rgba(30,43,60,.15);font-size:.62rem;font-weight:800;color:#344256}.floating-stat strong{display:block;color:#172334;font-size:1rem}.floating-stat.one{left:-28px;bottom:34px}.floating-stat.two{right:-20px;top:28px}.floating-stat i{color:var(--secondary);margin-right:5px}
+    .landing-section{padding:58px 0}.section-heading{text-align:center;max-width:700px;margin:0 auto 28px}.section-heading .kicker{font-size:.65rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--secondary)}.section-heading h2{font-size:clamp(1.7rem,3vw,2.45rem);letter-spacing:-.04em;margin:8px 0;color:#172334}.section-heading p{font-size:.82rem;line-height:1.65;color:#718096;margin:0}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.pro-feature{background:#fff;border:1px solid #e1e7ee;border-radius:16px;padding:22px;box-shadow:0 8px 25px rgba(30,43,60,.045);transition:.25s}.pro-feature:hover{transform:translateY(-5px);border-color:#f2c28b;box-shadow:0 18px 35px rgba(30,43,60,.09)}.pro-feature .icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#fff4e6;color:var(--secondary);margin-bottom:14px}.pro-feature h3{font-size:.86rem;margin:0 0 7px;color:#1c2a3d}.pro-feature p{font-size:.7rem;line-height:1.6;color:#718096;margin:0}
+    .pricing-section{background:#172334;color:#fff;border-radius:24px;padding:48px 32px;position:relative;overflow:hidden}.pricing-section::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;right:-160px;top:-180px;background:radial-gradient(circle,rgba(242,133,0,.25),transparent 68%)}.pricing-section .section-heading{position:relative}.pricing-section .section-heading h2{color:#fff}.pricing-section .section-heading p{color:#aeb9c8}.pricing-section .kicker{color:#ffb648}.landing-pricing-grid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.landing-price{background:#fff;color:#172334;border:2px solid transparent;border-radius:16px;padding:22px;box-shadow:0 15px 35px rgba(0,0,0,.12);position:relative;transition:.25s}.landing-price:hover{transform:translateY(-5px)}.landing-price.featured{border-color:var(--secondary);transform:translateY(-6px)}.landing-price .lp-badge{position:absolute;top:-10px;right:16px;background:var(--secondary);color:#fff;font-size:.54rem;font-weight:900;padding:4px 9px;border-radius:20px;text-transform:uppercase}.lp-name{font-size:.9rem;font-weight:900}.lp-price{font-size:1.65rem;font-weight:900;color:var(--secondary);margin:7px 0}.lp-price small{font-size:.62rem;color:#64748b}.lp-meta{font-size:.62rem;color:#718096;min-height:28px}.lp-list{list-style:none;padding:0;margin:12px 0 15px}.lp-list li{font-size:.65rem;color:#465467;padding:4px 0;display:flex;gap:7px}.lp-list i{color:#2e7d32}.lp-cta{width:100%;border:0;border-radius:9px;padding:10px;background:#172334;color:#fff;font-size:.68rem;font-weight:800;cursor:pointer}.featured .lp-cta{background:var(--secondary)}
+    .landing-support{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:24px}.landing-support a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);color:#fff;text-decoration:none;font-size:.65rem;font-weight:800}.landing-support a:hover{background:rgba(255,255,255,.14)}.landing-support a:first-child i{color:#80cbc4}.landing-support a:last-child i{color:#25d366}
+    .landing-footer{padding:32px 0 38px;text-align:center;color:#7b8797;font-size:.64rem}.landing-footer strong{color:#344256}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
+    /* Login dialog: shown only after Login is clicked */
+    .login-auth-overlay{position:fixed;inset:0;background:rgba(15,26,40,.70);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:20px;z-index:10020}.login-auth-overlay.show{display:flex}
+    .login-card{background:#fff;border-radius:18px;padding:34px 34px 28px;width:100%;max-width:430px;box-shadow:0 30px 80px rgba(0,0,0,.34);animation:loginIn .35s cubic-bezier(.2,.9,.3,1.2);position:relative;overflow:hidden}.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--secondary),#ffb648,var(--secondary))}.login-card-close{position:absolute;right:13px;top:12px;border:0;background:#f4f6f9;color:#7b8797;width:32px;height:32px;border-radius:9px;cursor:pointer}.login-card-close:hover{background:#fee2e2;color:#c62828}
+    @keyframes loginIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+    .login-brand{text-align:center;margin-bottom:20px}.login-brand .logo-circle{width:60px;height:60px;margin:0 auto 11px;background:linear-gradient(135deg,var(--primary),#34495e);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--secondary);font-size:1.45rem;box-shadow:0 10px 24px rgba(30,43,60,.25)}.login-brand h1{font-size:1.25rem;font-weight:900;color:var(--primary);margin:0 0 4px}.login-brand p{font-size:.75rem;color:#6b7a8d;margin:0}.login-field{margin-bottom:15px;position:relative}.login-field label{display:block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4a5a6e;margin-bottom:6px}.login-field .field-wrap{position:relative;display:flex;align-items:center}.login-field .field-icon{position:absolute;left:13px;color:#94a3b8;font-size:.84rem;pointer-events:none}.login-field input{width:100%;padding:12px 14px 12px 39px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;background:#f9fbfd}.login-field input:focus{outline:none;border-color:var(--secondary);background:#fff;box-shadow:0 0 0 4px rgba(242,133,0,.10)}.login-field .toggle-pass{position:absolute;right:10px;background:transparent;border:0;color:#94a3b8;cursor:pointer;font-size:.86rem;padding:6px;border-radius:6px}.login-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--primary),#34495e);color:#fff;border:0;border-radius:9px;font-size:.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.login-btn:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(30,43,60,.22)}.login-btn.secondary{background:#fff;color:var(--primary);border:1.5px solid var(--border)}.login-error{background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a;padding:8px 12px;border-radius:8px;font-size:.75rem;font-weight:600;margin-bottom:13px;display:none;align-items:center;gap:8px}.login-error.show{display:flex}.login-footer{text-align:center;margin-top:19px;padding-top:14px;border-top:1px dashed #e2e8f0;font-size:.63rem;color:#94a3b8;line-height:1.5}.login-footer .login-whatsapp{display:inline-flex;align-items:center;gap:5px;color:#25d366;font-weight:800;text-decoration:none;margin-top:4px;font-size:.68rem}
+    .login-top-actions{display:none}
+    @media(max-width:900px){.landing-hero{grid-template-columns:1fr;gap:34px;padding-top:48px}.hero-visual{max-width:760px;margin:0 auto;width:100%}.feature-grid,.landing-pricing-grid{grid-template-columns:1fr}.landing-price.featured{transform:none}.landing-navlinks{display:none}}
+    @media(max-width:600px){.landing-container{width:min(100% - 24px,1240px)}.landing-nav{height:66px}.brand-copy span{display:none}.landing-nav-btn{padding:8px 11px;font-size:.67rem}.landing-hero{padding:42px 0}.hero-title{font-size:2.45rem}.hero-copy{font-size:.88rem}.product-window{border-width:5px}.floating-stat{display:none}.landing-section{padding:42px 0}.pricing-section{padding:36px 16px}.login-card{padding:30px 22px 24px}}
     /* ============ SIGNUP / AUTH MODAL ============ */
     .auth-modal-overlay {
       position: fixed; inset: 0; background: rgba(15, 26, 40, 0.65);
@@ -179,12 +146,12 @@
     .dashboard.hidden { display: none; }
 
     .sidebar {
-      width: 480px; background: #fff; padding: 0;
+      width: 340px; background: #fff; padding: 0;
       border-right: 1px solid var(--border);
       box-shadow: 4px 0 20px rgba(0,0,0,0.04);
       z-index: 20; display: flex; flex-direction: column; height: 100vh;
     }
-    .sidebar-scroll { flex: 1; overflow-y: auto; padding: 24px 22px 20px; }
+    .sidebar-scroll { flex: 1; overflow-y: auto; padding: 18px 16px 18px; }
 
     .sidebar-header {
       font-size: 1.35rem; font-weight: 700; margin-bottom: 18px;
@@ -637,7 +604,7 @@
     .btn-pair .btn { flex: 1; }
 
     @media (max-width: 1100px) {
-      .sidebar { width: 420px; }
+      .sidebar { width: 340px; }
       .instructions-panel { max-width: calc(100% - 100px); }
     }
     @media (max-width: 900px) {
@@ -1159,107 +1126,82 @@
 
 <!-- ============ LOGIN ============ -->
 <div class="login-screen" id="loginScreen">
-  <div class="login-top-actions">
-    <button type="button" class="login-top-btn" id="topLoginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
-    <button type="button" class="login-top-btn primary" id="topSignupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
-  </div>
-  <div class="login-screen-inner">
-    <div class="login-hero">
-      <div class="login-left">
-      <div class="login-card">
-        <div class="login-brand">
-          <div class="logo-circle"><i class="fas fa-tag"></i></div>
-          <h1>LynkKar Pro Label Studio</h1>
-          <p>Sign in to access your dashboard</p>
-        </div>
-        <div class="login-error" id="loginError">
-          <i class="fas fa-exclamation-circle"></i>
-          <span id="loginErrorMsg">Invalid email or password.</span>
-        </div>
-        <form id="loginForm" autocomplete="off">
-          <div class="login-field">
-            <label for="loginEmail">Email</label>
-            <div class="field-wrap">
-              <i class="fas fa-envelope field-icon"></i>
-              <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
-            </div>
-          </div>
-          <div class="login-field">
-            <label for="loginPass">Password</label>
-            <div class="field-wrap">
-              <i class="fas fa-lock field-icon"></i>
-              <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
-              <button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password">
-                <i class="fas fa-eye" id="togglePassIcon"></i>
-              </button>
-            </div>
-          </div>
-          <button type="submit" class="login-btn" id="loginBtn">
-            <i class="fas fa-sign-in-alt"></i> Sign In
-          </button>
-          <div style="text-align:center; margin-top:12px;">
-            <button type="button" class="login-btn secondary" id="showSignupBtn" style="padding:10px; font-size:0.85rem;">
-              <i class="fas fa-user-plus"></i> Create Account
-            </button>
-          </div>
-        </form>
-        <div class="login-footer">
-          © 2025 LynkKar Pro Label Studio. All Rights Reserved.<br>
-          <a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp">
-            <i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757
-          </a>
-          <div style="margin-top:6px;"><span class="firebase-status" id="firebaseStatus"><span class="dot"></span> Firebase connected</span></div>
-        </div>
+  <div class="landing-bg"><div class="landing-grid"></div></div>
+  <div class="landing-container">
+    <nav class="landing-nav">
+      <a class="brand-lockup" href="#top">
+        <div class="brand-mark"><i class="fas fa-tag"></i></div>
+        <div class="brand-copy"><strong>LynkKar Pro Label Studio</strong><span>Professional barcode, QR & label management</span></div>
+      </a>
+      <div class="landing-navlinks">
+        <a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#support">Support</a>
       </div>
+      <div class="landing-actions">
+        <button type="button" class="landing-nav-btn" id="topLoginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+        <button type="button" class="landing-nav-btn primary" id="topSignupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
       </div>
-      </div>
-      <div class="login-demo">
-        <video class="promo-video" autoplay muted loop playsinline preload="metadata"><source src="/assets/lynkkar-demo.mp4" type="video/mp4"></video>
-        <div class="login-demo-head"><span><i class="fas fa-wand-magic-sparkles"></i> LIVE PRODUCT PREVIEW</span><span>Animated demo</span></div>
-        <div class="demo-window">
-          <div class="demo-toolbar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-title">LynkKar Pro Label Studio</span></div>
-          <div class="demo-body">
-            <div class="demo-side"><div class="active"><i class="fas fa-tag"></i> Labels</div><div><i class="fas fa-file-csv"></i> Bulk</div><div><i class="fas fa-paint-brush"></i> Design</div><div><i class="fas fa-download"></i> Export</div><div><i class="fas fa-crown"></i> Plan</div></div>
-            <div class="demo-main"><div class="demo-stat-row"><div class="demo-stat"><b>1,248</b><span>Labels</span></div><div class="demo-stat"><b>98%</b><span>Print ready</span></div><div class="demo-stat"><b>4</b><span>Formats</span></div></div><div class="demo-labels"><div class="demo-label"><div class="demo-brand"></div><div class="demo-line" style="width:80%"></div><div class="demo-line" style="width:58%"></div><div class="demo-code"></div><div class="demo-qr"></div></div><div class="demo-label"><div class="demo-brand" style="width:42%"></div><div class="demo-line" style="width:75%"></div><div class="demo-line" style="width:50%"></div><div class="demo-code"></div><div class="demo-qr"></div></div><div class="demo-label"><div class="demo-brand" style="width:68%"></div><div class="demo-line" style="width:70%"></div><div class="demo-line" style="width:45%"></div><div class="demo-code"></div><div class="demo-qr"></div></div></div><div class="demo-scan"></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </nav>
 
-    <!-- Animated features on login screen -->
-    <div class="login-features">
-      <div class="feature-card">
-        <i class="fas fa-barcode"></i>
-        <h4>Barcode & QR Labels</h4>
-        <p>Generate EAN, UPC, CODE128 barcodes and QR codes instantly</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-file-csv"></i>
-        <h4>Bulk Import</h4>
-        <p>Upload CSV, Excel or JSON to create hundreds of labels in seconds</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-paint-brush"></i>
-        <h4>Custom Designs</h4>
-        <p>Drag-and-drop placement, themes, fonts and full color control</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-file-pdf"></i>
-        <h4>PDF & Vector Export</h4>
-        <p>Print-ready PDFs plus .EPS and .AI vector files for designers</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-cloud"></i>
-        <h4>Cloud Sync</h4>
-        <p>Your labels and settings sync securely via Firebase</p>
-      </div>
-      <div class="feature-card"><i class="fas fa-crown"></i><h4>Flexible Plans</h4><p>Choose the plan that fits your label volume and export needs</p></div>
-    </div>
-    <div class="login-pricing">
-      <div class="login-pricing-head"><div><h2><i class="fas fa-tags"></i> Simple, transparent pricing</h2><p>Plans, limits and features are controlled by your administrator.</p></div></div>
-      <div class="login-pricing-grid" id="landingPricingGrid"></div>
-      <div class="login-support-strip"><a id="landingEmailSupport" href="mailto:support@lynkkar.com"><i class="fas fa-envelope"></i> Email Support</a><a id="landingWhatsAppSupport" href="https://wa.me/923216175757" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp Support</a></div>
-    </div>
+    <main id="top">
+      <section class="landing-hero">
+        <div class="hero-copy-wrap">
+          <div class="hero-eyebrow"><i class="fas fa-sparkles"></i> Smart label creation, built for modern businesses</div>
+          <h1 class="hero-title">Create. Manage. <span>Print.</span><br>Labels made simple.</h1>
+          <p class="hero-copy">Generate professional barcode and QR labels, import products in bulk, design custom stickers and export print-ready files — all from one fast, easy-to-use workspace.</p>
+          <div class="hero-ctas">
+            <button class="hero-btn primary" type="button" id="heroLoginBtn"><i class="fas fa-arrow-right-to-bracket"></i> Start Creating</button>
+            <button class="hero-btn secondary" type="button" id="heroSignupBtn"><i class="fas fa-user-plus"></i> Create Free Account</button>
+          </div>
+          <div class="hero-trust"><span><i class="fas fa-check-circle"></i> 3-day trial</span><span><i class="fas fa-check-circle"></i> No credit card</span><span><i class="fas fa-check-circle"></i> Cloud powered</span></div>
+        </div>
+        <div class="hero-visual">
+          <div class="visual-glow"></div>
+          <div class="product-window">
+            <video autoplay muted loop playsinline preload="metadata"><source src="/assets/lynkkar-demo.mp4" type="video/mp4"></video>
+            <div class="window-caption"><span><i class="fas fa-circle-play"></i> LynkKar Pro live preview</span><span><i class="fas fa-bolt"></i> Fast & print-ready</span></div>
+          </div>
+          <div class="floating-stat one"><i class="fas fa-barcode"></i><strong>1,248+</strong>labels generated</div>
+          <div class="floating-stat two"><i class="fas fa-file-export"></i><strong>PDF • JPG • Vector</strong>export ready</div>
+        </div>
+      </section>
+
+      <section class="landing-section" id="features">
+        <div class="section-heading"><div class="kicker">Everything in one place</div><h2>Built to make label work effortless</h2><p>From the first product row to the final print file, LynkKar keeps your workflow organized and simple.</p></div>
+        <div class="feature-grid">
+          <article class="pro-feature"><div class="icon"><i class="fas fa-barcode"></i></div><h3>Barcode & QR Generation</h3><p>Generate EAN, UPC, CODE128 and QR codes instantly with professional label layouts.</p></article>
+          <article class="pro-feature"><div class="icon"><i class="fas fa-file-excel"></i></div><h3>Bulk Product Import</h3><p>Upload CSV, Excel or JSON and create hundreds of labels without repetitive data entry.</p></article>
+          <article class="pro-feature"><div class="icon"><i class="fas fa-pen-ruler"></i></div><h3>Custom Label Designer</h3><p>Control fields, placement, typography, colors, images and label dimensions.</p></article>
+          <article class="pro-feature"><div class="icon"><i class="fas fa-file-pdf"></i></div><h3>Professional Export</h3><p>Export print-ready PDFs and other formats according to your subscription permissions.</p></article>
+          <article class="pro-feature"><div class="icon"><i class="fas fa-cloud"></i></div><h3>Secure Cloud Workspace</h3><p>Keep account settings, subscriptions and project data connected through Firebase.</p></article>
+          <article class="pro-feature"><div class="icon"><i class="fas fa-chart-line"></i></div><h3>Plans That Scale</h3><p>Flexible limits for labels, users, exports and features — managed by your administrator.</p></article>
+        </div>
+      </section>
+
+      <section class="landing-section" id="pricing">
+        <div class="pricing-section">
+          <div class="section-heading"><div class="kicker">Simple & transparent</div><h2>Choose the plan that fits your workflow</h2><p>Pricing, limits, export rights and features are controlled from the LynkKar admin panel.</p></div>
+          <div class="landing-pricing-grid" id="landingPricingGrid"></div>
+          <div class="landing-support" id="support"><a id="landingEmailSupport" href="mailto:support@lynkkar.com"><i class="fas fa-envelope"></i> Email Support</a><a id="landingWhatsAppSupport" href="https://wa.me/923216175757" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp Support</a></div>
+        </div>
+      </section>
+      <footer class="landing-footer"><strong>LynkKar Pro Label Studio</strong> · Professional label management for modern businesses · © 2026</footer>
+    </main>
+  </div>
+</div>
+
+<!-- ============ LOGIN DIALOG ============ -->
+<div class="login-auth-overlay" id="loginAuthModal" aria-hidden="true">
+  <div class="login-card">
+    <button type="button" class="login-card-close" id="loginCloseBtn" aria-label="Close login"><i class="fas fa-times"></i></button>
+    <div class="login-brand"><div class="logo-circle"><i class="fas fa-tag"></i></div><h1>LynkKar Pro Label Studio</h1><p>Sign in to access your dashboard</p></div>
+    <div class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i><span id="loginErrorMsg">Invalid email or password.</span></div>
+    <form id="loginForm" autocomplete="off">
+      <div class="login-field"><label for="loginEmail">Email</label><div class="field-wrap"><i class="fas fa-envelope field-icon"></i><input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email"></div></div>
+      <div class="login-field"><label for="loginPass">Password</label><div class="field-wrap"><i class="fas fa-lock field-icon"></i><input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password"><button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password"><i class="fas fa-eye" id="togglePassIcon"></i></button></div></div>
+      <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+      <div style="text-align:center;margin-top:10px"><button type="button" class="login-btn secondary" id="showSignupBtn" style="padding:10px;font-size:.76rem"><i class="fas fa-user-plus"></i> Create Account</button></div>
+    </form>
+    <div class="login-footer">© 2026 LynkKar Pro Label Studio. All Rights Reserved.<br><a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757</a><div style="margin-top:6px"><span class="firebase-status" id="firebaseStatus"><span class="dot"></span> Firebase connected</span></div></div>
   </div>
 </div>
 
@@ -2590,12 +2532,26 @@
       updateUserBadge();
     }, 30);
   }
+  const loginAuthModal = $('loginAuthModal');
+  function openLogin() {
+    if (!loginAuthModal) return;
+    loginAuthModal.classList.add('show');
+    loginAuthModal.setAttribute('aria-hidden','false');
+    setTimeout(() => loginEmail?.focus(), 80);
+  }
+  function closeLogin() {
+    if (!loginAuthModal) return;
+    loginAuthModal.classList.remove('show');
+    loginAuthModal.setAttribute('aria-hidden','true');
+    loginError?.classList.remove('show');
+  }
   function showLogin() {
     clearInterval(subscriptionTicker);
     loginScreen.classList.remove('hidden');
     dashboardApp.classList.add('hidden');
-    loginPass.value = '';
-    loginError.classList.remove('show');
+    closeLogin();
+    if (loginPass) loginPass.value = '';
+    if (loginError) loginError.classList.remove('show');
   }
 
   function updateUserBadge() {
@@ -2668,11 +2624,16 @@
 
   // ==================== SIGNUP ====================
   const signupModal = $('signupModal');
-  function openSignup() { signupModal.classList.add('show'); $('signupMsg').classList.remove('show'); }
+  function openSignup() { closeLogin(); signupModal.classList.add('show'); $('signupMsg').classList.remove('show'); }
   function closeSignup() { signupModal.classList.remove('show'); }
   $('showSignupBtn').addEventListener('click', openSignup);
   $('topSignupBtn')?.addEventListener('click', openSignup);
-  $('topLoginBtn')?.addEventListener('click', () => $('loginEmail')?.focus());
+  $('heroSignupBtn')?.addEventListener('click', openSignup);
+  $('topLoginBtn')?.addEventListener('click', openLogin);
+  $('heroLoginBtn')?.addEventListener('click', openLogin);
+  $('loginCloseBtn')?.addEventListener('click', closeLogin);
+  loginAuthModal?.addEventListener('click', (e) => { if (e.target === loginAuthModal) closeLogin(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLogin(); closeSignup(); } });
   $('signupCloseBtn').addEventListener('click', closeSignup);
   $('signupCancelBtn').addEventListener('click', closeSignup);
   signupModal.addEventListener('click', (e) => { if (e.target === signupModal) closeSignup(); });
