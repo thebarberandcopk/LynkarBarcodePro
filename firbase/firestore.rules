@@ -33,8 +33,23 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
 
       // Admin may manage customer status/subscription/usage, but role is immutable.
+      // A normal user may perform exactly one account activation after Firebase email verification.
       allow update: if (
           isAdmin() && request.resource.data.role == resource.data.role
+        ) || (
+          signedIn()
+          && request.auth.uid == userId
+          && request.auth.token.email_verified == true
+          && resource.data.role == 'user'
+          && resource.data.status == 'pending'
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == 'active'
+          && request.resource.data.subscription == 'trial'
+          && request.resource.data.trialStart <= request.time.toMillis()
+          && request.resource.data.trialStart >= resource.data.createdAt
+          && request.resource.data.trialEnd == request.resource.data.trialStart + 259200000
+          && request.resource.data.subscriptionStart == resource.data.subscriptionStart
+          && request.resource.data.subscriptionEnd == resource.data.subscriptionEnd
         ) || (
           signedIn()
           && request.auth.uid == userId
