@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LynkKar Pro Label Studio</title>
 
-  <!-- Firebase SDK (compat for easier integration) -->
+  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -45,47 +45,95 @@
     * { box-sizing: border-box; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; }
     body { margin: 0; background: #eef2f7; color: #1a2634; }
 
-    /* ============ LOGIN ============ */
-    .login-screen {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #1e2b3c 0%, #2c3e50 55%, #f28500 130%);
+    /* ============ TOP BAR (login/signup + branding) ============ */
+    .top-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
+      background: rgba(255,255,255,0.96); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; height: 58px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .top-header .th-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 1.05rem; color: var(--primary);
+      cursor: pointer; user-select: none;
+    }
+    .top-header .th-brand .th-logo {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
       display: flex; align-items: center; justify-content: center;
-      z-index: 10000; padding: 20px;
+      color: var(--secondary); font-size: 1rem;
+      box-shadow: 0 3px 10px rgba(30,43,60,0.25);
     }
-    .login-screen.hidden { display: none; }
+    .top-header .th-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .th-btn {
+      padding: 8px 18px; border-radius: 8px; font-size: 0.82rem;
+      font-weight: 700; cursor: pointer; border: none;
+      transition: var(--transition); display: inline-flex;
+      align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .th-btn.primary { background: var(--secondary); color: #fff; }
+    .th-btn.primary:hover { background: #d97700; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(242,133,0,0.3); }
+    .th-btn.outline { background: transparent; color: var(--primary); border: 1.5px solid var(--border); }
+    .th-btn.outline:hover { background: #f0f4fa; border-color: var(--secondary); }
+    .th-user {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #eef6ff; border: 1.5px solid #bbdefb;
+      color: #0d47a1; padding: 6px 12px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+    }
+    .th-user i { font-size: 0.8rem; }
+    .th-user .role-tag {
+      background: var(--secondary); color: #fff;
+      padding: 1px 7px; border-radius: 10px;
+      font-size: 0.6rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    /* ============ LOGIN MODAL ============ */
+    .login-modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 26, 40, 0.7);
+      backdrop-filter: blur(5px); display: none; align-items: center;
+      justify-content: center; z-index: 10005; padding: 20px;
+      overflow-y: auto;
+    }
+    .login-modal-overlay.show { display: flex; }
     .login-card {
-      background: #fff; border-radius: 16px; padding: 40px 36px 32px;
-      width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);
-      animation: loginIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
-      position: relative; overflow: hidden;
+      background: #fff; border-radius: 16px; padding: 36px 32px 28px;
+      width: 100%; max-width: 420px; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+      animation: loginIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      position: relative; overflow: hidden; margin: auto;
     }
-    @keyframes loginIn { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes loginIn { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .login-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
       background: linear-gradient(90deg, var(--secondary), #ffb648, var(--secondary));
     }
-    .login-brand { text-align: center; margin-bottom: 20px; }
+    .login-brand { text-align: center; margin-bottom: 22px; }
     .login-brand .logo-circle {
-      width: 64px; height: 64px; margin: 0 auto 12px;
+      width: 60px; height: 60px; margin: 0 auto 12px;
       background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      color: var(--secondary); font-size: 1.6rem;
+      color: var(--secondary); font-size: 1.5rem;
       box-shadow: 0 8px 20px rgba(30,43,60,0.3);
     }
-    .login-brand h1 { font-size: 1.35rem; font-weight: 800; color: var(--primary); margin: 0 0 4px; }
-    .login-brand p { font-size: 0.78rem; color: #6b7a8d; margin: 0; font-weight: 500; }
-    .login-field { margin-bottom: 16px; position: relative; }
+    .login-brand h1 { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin: 0 0 4px; }
+    .login-brand p { font-size: 0.76rem; color: #6b7a8d; margin: 0; font-weight: 500; }
+    .login-field { margin-bottom: 14px; position: relative; }
     .login-field label {
-      display: block; font-size: 0.72rem; font-weight: 700;
+      display: block; font-size: 0.7rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.06em;
       color: #4a5a6e; margin-bottom: 6px;
     }
     .login-field .field-wrap { position: relative; display: flex; align-items: center; }
     .login-field .field-icon { position: absolute; left: 14px; color: #94a3b8; font-size: 0.9rem; pointer-events: none; }
     .login-field input {
-      width: 100%; padding: 12px 14px 12px 40px;
+      width: 100%; padding: 11px 14px 11px 40px;
       border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.92rem; background: #f9fbfd; transition: var(--transition);
+      font-size: 0.9rem; background: #f9fbfd; transition: var(--transition);
       font-family: inherit;
     }
     .login-field input:focus {
@@ -100,108 +148,47 @@
     .login-field .toggle-pass:hover { color: var(--primary); background: #f1f5f9; }
     .login-error {
       background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a;
-      padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
-      margin-bottom: 14px; display: none; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 8px; font-size: 0.76rem; font-weight: 600;
+      margin-bottom: 12px; display: none; align-items: center; gap: 8px;
     }
     .login-error.show { display: flex; }
     .login-btn {
-      width: 100%; padding: 13px;
+      width: 100%; padding: 12px;
       background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
       color: #fff; border: none; border-radius: 10px;
-      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      font-size: 0.92rem; font-weight: 700; cursor: pointer;
       transition: var(--transition); display: flex; align-items: center; justify-content: center;
-      gap: 8px; letter-spacing: 0.03em;
+      gap: 8px; letter-spacing: 0.02em;
     }
     .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(30,43,60,0.35); }
     .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-    .login-btn.secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
-    .login-btn.secondary:hover { background: #f8fafc; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
-    .login-footer { text-align: center; margin-top: 22px; padding-top: 16px; border-top: 1px dashed #e2e8f0; font-size: 0.68rem; color: #94a3b8; line-height: 1.5; }
-    .login-footer .login-whatsapp { display: inline-flex; align-items: center; gap: 5px; color: #25d366; font-weight: 700; text-decoration: none; margin-top: 4px; font-size: 0.72rem; }
+    .login-footer { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #e2e8f0; font-size: 0.66rem; color: #94a3b8; line-height: 1.5; }
+    .login-footer .login-whatsapp { display: inline-flex; align-items: center; gap: 5px; color: #25d366; font-weight: 700; text-decoration: none; margin-top: 4px; font-size: 0.7rem; }
     .login-footer .login-whatsapp:hover { text-decoration: underline; }
-
-    /* ============ SIGNUP / AUTH MODAL ============ */
-    .auth-modal-overlay {
-      position: fixed; inset: 0; background: rgba(15, 26, 40, 0.65);
-      backdrop-filter: blur(4px); display: none; align-items: center;
-      justify-content: center; z-index: 10005; padding: 20px;
-    }
-    .auth-modal-overlay.show { display: flex; }
-    .auth-modal {
-      background: #fff; border-radius: 16px; width: 100%; max-width: 460px;
-      max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
-      animation: loginIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
-      position: relative; padding: 34px 32px 28px;
-    }
-    .auth-modal::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
-      background: linear-gradient(90deg, var(--secondary), #ffb648, var(--secondary));
-      border-radius: 16px 16px 0 0;
-    }
-    .auth-modal h2 { margin: 0 0 6px; font-size: 1.2rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-    .auth-modal .auth-sub { font-size: 0.78rem; color: #6b7a8d; margin-bottom: 20px; }
-    .auth-modal .form-group { margin-bottom: 14px; }
-    .auth-modal .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4a5a6e; margin-bottom: 5px; }
-    .auth-modal .form-group input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.9rem; background: #f9fbfd; transition: var(--transition); font-family: inherit; }
-    .auth-modal .form-group input:focus { outline: none; border-color: var(--secondary); background: #fff; box-shadow: 0 0 0 4px rgba(242,133,0,0.1); }
-    .auth-actions { display: flex; gap: 10px; margin-top: 8px; }
-    .auth-actions .btn { flex: 1; }
-    .auth-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: var(--transition); }
-    .auth-close:hover { background: #fee2e2; color: var(--danger); }
-    .auth-msg { font-size: 0.78rem; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
-    .auth-msg.show { display: block; }
-    .auth-msg.error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
-    .auth-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-
-    /* ============ ANIMATED DASHBOARD PREVIEW (login screen) ============ */
-    .login-features {
-      max-width: 880px; width: 100%; margin: 22px auto 0; display: grid;
-      grid-template-columns: repeat(3, 1fr); gap: 12px;
-      animation: fadeSlideUp 0.6s 0.15s both;
-    }
-    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-    .feature-card {
-      background: rgba(255,255,255,0.09); backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
-      padding: 18px 16px; color: #fff; text-align: center;
-      transition: transform 0.25s ease, background 0.25s;
-    }
-    .feature-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.15); }
-    .feature-card i { font-size: 1.7rem; color: var(--secondary); margin-bottom: 10px; display: block; }
-    .feature-card h4 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 700; }
-    .feature-card p { margin: 0; font-size: 0.72rem; color: rgba(255,255,255,0.75); line-height: 1.45; }
-    .login-left { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 880px; }
-    .login-left .login-card { margin: 0 auto; }
-    .login-screen-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+    .login-switch { text-align: center; margin-top: 14px; font-size: 0.78rem; color: #64748b; }
+    .login-switch a { color: var(--secondary); font-weight: 700; cursor: pointer; text-decoration: none; }
+    .login-switch a:hover { text-decoration: underline; }
 
     /* ============ DASHBOARD ============ */
-    .dashboard { display: flex; height: 100vh; overflow: hidden; }
+    .dashboard { display: flex; height: 100vh; overflow: hidden; padding-top: 58px; }
     .dashboard.hidden { display: none; }
 
     .sidebar {
       width: 480px; background: #fff; padding: 0;
       border-right: 1px solid var(--border);
       box-shadow: 4px 0 20px rgba(0,0,0,0.04);
-      z-index: 20; display: flex; flex-direction: column; height: 100vh;
+      z-index: 20; display: flex; flex-direction: column; height: calc(100vh - 58px);
     }
-    .sidebar-scroll { flex: 1; overflow-y: auto; padding: 24px 22px 20px; }
+    .sidebar-scroll { flex: 1; overflow-y: auto; padding: 22px 20px 18px; }
 
     .sidebar-header {
-      font-size: 1.35rem; font-weight: 700; margin-bottom: 18px;
-      padding-bottom: 12px; border-bottom: 3px solid var(--secondary);
+      font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 3px solid var(--secondary);
       color: var(--primary); display: flex; align-items: center;
       justify-content: space-between; gap: 10px;
     }
     .sidebar-header .sh-left { display: flex; align-items: center; gap: 10px; }
-    .sidebar-header i.main-icon { color: var(--secondary); font-size: 1.5rem; }
-    .header-actions { display: flex; align-items: center; gap: 6px; }
-    .user-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: #eef6ff; border: 1.5px solid #bbdefb;
-      color: #0d47a1; padding: 4px 10px; border-radius: 20px;
-      font-size: 0.68rem; font-weight: 700; white-space: nowrap;
-    }
-    .user-badge i { font-size: 0.7rem; }
+    .sidebar-header i.main-icon { color: var(--secondary); font-size: 1.4rem; }
     .logout-btn {
       background: #f1f5f9; border: 1.5px solid var(--border);
       color: #64748b; padding: 6px 12px; border-radius: 6px;
@@ -212,14 +199,14 @@
 
     .tab-nav {
       display: flex; border-bottom: 2px solid #e2e8f0;
-      margin-bottom: 18px; gap: 4px; background: #f8fafc;
+      margin-bottom: 16px; gap: 3px; background: #f8fafc;
       border-radius: 8px 8px 0 0; padding: 4px 4px 0 4px;
       flex-wrap: wrap;
     }
     .tab-btn {
-      flex: 1; padding: 10px 6px; background: transparent;
+      flex: 1; padding: 9px 6px; background: transparent;
       border: none; border-bottom: 3px solid transparent;
-      font-size: 0.72rem; font-weight: 700; color: #64748b;
+      font-size: 0.7rem; font-weight: 700; color: #64748b;
       cursor: pointer; transition: var(--transition);
       display: flex; align-items: center; justify-content: center;
       gap: 5px; border-radius: 6px 6px 0 0; text-transform: uppercase;
@@ -227,15 +214,15 @@
     }
     .tab-btn:hover { background: #eef2f7; color: var(--primary); }
     .tab-btn.active { color: var(--secondary); border-bottom-color: var(--secondary); background: #fff; }
-    .tab-btn i { font-size: 0.85rem; }
+    .tab-btn i { font-size: 0.82rem; }
 
     .tab-panel { display: none; animation: fadeTab 0.25s ease; }
     .tab-panel.active { display: block; }
     @keyframes fadeTab { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    .form-group { margin-bottom: 14px; }
+    .form-group { margin-bottom: 13px; }
     .form-group label {
-      display: block; margin-bottom: 5px; font-size: 0.78rem;
+      display: block; margin-bottom: 5px; font-size: 0.76rem;
       font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em;
       color: #4a5a6e;
     }
@@ -250,7 +237,7 @@
     .form-group select,
     .form-group textarea {
       width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
-      border-radius: 8px; font-size: 0.9rem; background: #f9fbfd;
+      border-radius: 8px; font-size: 0.88rem; background: #f9fbfd;
       transition: var(--transition);
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
@@ -259,14 +246,14 @@
     }
     .form-row { display: flex; gap: 12px; }
     .form-row .form-group { flex: 1; }
-    .help-text { font-size: 0.7rem; color: #6b7a8d; margin-top: 4px; display: block; }
+    .help-text { font-size: 0.68rem; color: #6b7a8d; margin-top: 4px; display: block; }
     .section-title {
-      font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+      font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.08em; color: var(--secondary);
-      margin: 18px 0 10px; display: flex; align-items: center;
+      margin: 16px 0 10px; display: flex; align-items: center;
       gap: 6px; padding-bottom: 6px; border-bottom: 1px dashed #e2e8f0;
     }
-    .section-title i { font-size: 0.85rem; }
+    .section-title i { font-size: 0.82rem; }
 
     .input-with-button { display: flex; gap: 6px; align-items: stretch; }
     .input-with-button input { flex: 1; }
@@ -289,16 +276,16 @@
     .image-preview-box.has-image { border-style: solid; border-color: #a5d6a7; background: #f1f8e9; }
     .image-preview-box.error { border-color: #ef9a9a; background: #ffebee; }
     .image-preview-box .img-thumb { width: 56px; height: 56px; border-radius: 6px; object-fit: contain; background: #fff; border: 1px solid #e2e8f0; flex-shrink: 0; }
-    .image-preview-box .img-info { flex: 1; min-width: 0; font-size: 0.72rem; color: #4a5a6e; line-height: 1.4; }
+    .image-preview-box .img-info { flex: 1; min-width: 0; font-size: 0.7rem; color: #4a5a6e; line-height: 1.4; }
     .image-preview-box .img-info .img-status { font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
     .image-preview-box .img-info .img-status.ok { color: var(--success); }
     .image-preview-box .img-info .img-status.err { color: var(--danger); }
     .image-preview-box .img-info .img-url-ellipsis {
       word-break: break-all; overflow: hidden; text-overflow: ellipsis;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      color: #64748b; font-size: 0.68rem;
+      color: #64748b; font-size: 0.66rem;
     }
-    .image-preview-box .img-placeholder { font-size: 0.72rem; color: #94a3b8; font-style: italic; text-align: center; width: 100%; }
+    .image-preview-box .img-placeholder { font-size: 0.7rem; color: #94a3b8; font-style: italic; text-align: center; width: 100%; }
     .image-preview-box .clear-img-btn { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 4px; flex-shrink: 0; }
 
     .qr-img-toggle, .dual-code-toggle {
@@ -306,7 +293,7 @@
       padding: 8px 10px; background: #eef6ff; border: 1.5px solid #bbdefb;
       border-radius: 8px; margin-top: 8px;
     }
-    .qr-img-toggle span, .dual-code-toggle span { font-size: 0.74rem; font-weight: 600; color: #0d47a1; display: flex; align-items: center; gap: 6px; }
+    .qr-img-toggle span, .dual-code-toggle span { font-size: 0.72rem; font-weight: 600; color: #0d47a1; display: flex; align-items: center; gap: 6px; }
 
     .auto-gen-panel {
       background: linear-gradient(135deg, #fff8ef 0%, #fff 100%);
@@ -317,18 +304,18 @@
     @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     .auto-gen-header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 12px; font-size: 0.8rem; font-weight: 700;
+      margin-bottom: 12px; font-size: 0.78rem; font-weight: 700;
       color: #b86500; text-transform: uppercase; letter-spacing: 0.04em;
     }
     .auto-gen-preview {
       background: #fff; border: 1px dashed #f5b56b; border-radius: 6px;
       padding: 10px 12px; font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 0.95rem; font-weight: 700; color: var(--primary);
+      font-size: 0.92rem; font-weight: 700; color: var(--primary);
       text-align: center; letter-spacing: 0.05em; word-break: break-all;
       min-height: 40px; display: flex; align-items: center; justify-content: center;
       position: relative; overflow: hidden;
     }
-    .auto-gen-preview .preview-label { position: absolute; top: 3px; right: 8px; font-size: 0.6rem; color: #c08540; font-weight: 600; letter-spacing: 0.08em; }
+    .auto-gen-preview .preview-label { position: absolute; top: 3px; right: 8px; font-size: 0.58rem; color: #c08540; font-weight: 600; letter-spacing: 0.08em; }
 
     .color-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
     .color-picker input[type="radio"] { display: none; }
@@ -340,9 +327,9 @@
     .color-picker input[type="radio"]:checked + label { border: 3px solid #1e2b3c; transform: scale(1.12); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
     .btn {
-      width: 100%; padding: 12px 16px; background: var(--primary);
+      width: 100%; padding: 11px 16px; background: var(--primary);
       color: white; border: none; border-radius: 8px;
-      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      font-size: 0.92rem; font-weight: 600; cursor: pointer;
       transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .btn:hover { background: #0f1a28; transform: translateY(-1px); }
@@ -352,20 +339,20 @@
     .btn-danger:hover { background: #8e0000; }
     .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--primary); }
     .btn-outline:hover { background: #f0f4fa; border-color: var(--secondary); }
-    .btn-sm { padding: 8px 12px; font-size: 0.8rem; }
+    .btn-sm { padding: 8px 12px; font-size: 0.78rem; }
     .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
 
     .sidebar-footer {
       border-top: 1.5px solid var(--border);
       background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-      padding: 12px 18px 14px; font-size: 0.7rem;
+      padding: 10px 18px 12px; font-size: 0.68rem;
       color: #4a5a6e; line-height: 1.5; flex-shrink: 0; text-align: center;
     }
-    .footer-copyright { font-size: 0.65rem; color: #64748b; }
+    .footer-copyright { font-size: 0.63rem; color: #64748b; }
     .footer-whatsapp {
       display: inline-flex; align-items: center; gap: 5px;
       background: #25d366; color: #fff; padding: 5px 12px;
-      border-radius: 20px; font-weight: 700; font-size: 0.72rem;
+      border-radius: 20px; font-weight: 700; font-size: 0.7rem;
       text-decoration: none; margin-top: 6px; transition: var(--transition);
       box-shadow: 0 2px 6px rgba(37,211,102,0.3);
     }
@@ -373,39 +360,39 @@
 
     .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-light); position: relative; min-width: 0; }
     .top-bar {
-      padding: 16px 28px; background: #fff; border-bottom: 1px solid var(--border);
+      padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border);
       display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-sm); z-index: 5;
+      flex-wrap: wrap; gap: 10px; box-shadow: var(--shadow-sm); z-index: 5;
     }
-    .top-bar h2 { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin: 0; }
-    .top-bar .badge { background: var(--secondary); color: #fff; font-size: 0.75rem; padding: 4px 10px; border-radius: 30px; margin-left: 10px; font-weight: 600; }
+    .top-bar h2 { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin: 0; }
+    .top-bar .badge { background: var(--secondary); color: #fff; font-size: 0.72rem; padding: 4px 10px; border-radius: 30px; margin-left: 10px; font-weight: 600; }
     .top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
     /* === DROPDOWN === */
-    .dd-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; background: none; border: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; color: #1a2634; text-align: left; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+    .dd-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; background: none; border: none; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: #1a2634; text-align: left; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
     .dd-item:hover { background: #f0f4fa; }
     .dd-item:active { background: #e2e8f0; }
     .dd-item i { width: 16px; text-align: center; }
 
     /* === SELECTION TOOLBAR === */
     .select-toolbar {
-      padding: 10px 28px; background: #fff7ed; border-bottom: 1.5px solid #f5d9b3;
+      padding: 10px 24px; background: #fff7ed; border-bottom: 1.5px solid #f5d9b3;
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      font-size: 0.78rem; z-index: 4;
+      font-size: 0.76rem; z-index: 4;
     }
     .select-toolbar.hidden { display: none; }
     .select-toolbar .st-label {
       font-weight: 700; color: #b86500; text-transform: uppercase;
-      letter-spacing: 0.04em; font-size: 0.7rem;
+      letter-spacing: 0.04em; font-size: 0.68rem;
       display: flex; align-items: center; gap: 5px;
     }
     .select-toolbar .st-count {
       background: var(--secondary); color: #fff; padding: 2px 10px;
-      border-radius: 20px; font-weight: 700; font-size: 0.7rem;
+      border-radius: 20px; font-weight: 700; font-size: 0.68rem;
     }
     .select-toolbar .st-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
     .st-btn {
-      padding: 6px 12px; border-radius: 6px; font-size: 0.72rem;
+      padding: 6px 12px; border-radius: 6px; font-size: 0.7rem;
       font-weight: 700; cursor: pointer; transition: var(--transition);
       border: 1.5px solid transparent; display: inline-flex;
       align-items: center; gap: 5px; background: #fff;
@@ -418,11 +405,11 @@
     .st-btn.danger { color: var(--danger); border-color: #fca5a5; }
     .st-btn.danger:hover { background: #fee2e2; }
 
-    .workspace { padding: 28px 28px 120px 28px; overflow-y: auto; flex: 1; }
+    .workspace { padding: 24px 24px 120px 24px; overflow-y: auto; flex: 1; }
 
     .label-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 24px; padding: 0; min-height: 400px; align-items: start;
+      gap: 22px; padding: 0; min-height: 400px; align-items: start;
     }
 
     .instructions-panel {
@@ -430,13 +417,13 @@
       background: #fff; border: 1.5px solid var(--border);
       border-left: 4px solid var(--secondary); border-radius: 10px;
       box-shadow: var(--shadow-md); padding: 12px 14px;
-      font-size: 0.74rem; color: #2c3e50; line-height: 1.55;
+      font-size: 0.72rem; color: #2c3e50; line-height: 1.55;
       z-index: 12; display: none; animation: fadeInUp 0.3s ease;
     }
     .instructions-panel.show { display: block; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .instructions-panel .instr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed #e2e8f0; }
-    .instructions-panel .instr-title { font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--secondary); display: flex; align-items: center; gap: 6px; }
+    .instructions-panel .instr-title { font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--secondary); display: flex; align-items: center; gap: 6px; }
     .instructions-panel .instr-close { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 2px 6px; border-radius: 4px; transition: var(--transition); }
     .instructions-panel .instr-close:hover { background: #f1f5f9; color: var(--danger); }
     .instructions-panel .instr-line { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
@@ -545,8 +532,8 @@
     }
 
     .empty-state {
-      grid-column: 1 / -1; text-align: center; padding: 80px 20px;
-      color: #7a8b9f; font-size: 1.1rem; background: #fff;
+      grid-column: 1 / -1; text-align: center; padding: 70px 20px;
+      color: #7a8b9f; font-size: 1.05rem; background: #fff;
       border-radius: var(--card-radius); border: 2px dashed #cfdbe9;
       display: flex; flex-direction: column; align-items: center; gap: 12px;
     }
@@ -556,7 +543,7 @@
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
       display: none; justify-content: center; align-items: center;
-      z-index: 9999; font-size: 1.3rem; font-weight: 600;
+      z-index: 9999; font-size: 1.2rem; font-weight: 600;
       color: var(--primary); flex-direction: column; gap: 18px;
     }
     #loadingOverlay i { font-size: 3rem; color: var(--secondary); animation: spin 1s infinite linear; }
@@ -566,11 +553,11 @@
 
     .toast {
       position: fixed; bottom: 24px; right: 24px; background: #1e2b3c;
-      color: #fff; padding: 14px 22px; border-radius: 10px;
+      color: #fff; padding: 13px 20px; border-radius: 10px;
       font-weight: 500; box-shadow: var(--shadow-md);
       display: flex; align-items: center; gap: 10px;
       z-index: 9998; opacity: 0; transform: translateY(20px);
-      transition: all 0.3s ease; max-width: 420px;
+      transition: all 0.3s ease; max-width: 380px; font-size: 0.85rem;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast i { color: var(--secondary); }
@@ -585,7 +572,7 @@
       padding: 8px 10px; background: #fff; border: 1.5px solid var(--border);
       border-radius: 8px; margin-top: 6px;
     }
-    .switch-row span { font-size: 0.78rem; font-weight: 600; color: #4a5a6e; }
+    .switch-row span { font-size: 0.76rem; font-weight: 600; color: #4a5a6e; }
     .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 22px; }
@@ -595,7 +582,7 @@
 
     .preset-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .preset-chip {
-      padding: 4px 10px; font-size: 0.7rem; font-weight: 600;
+      padding: 4px 10px; font-size: 0.68rem; font-weight: 600;
       background: #f1f5f9; border: 1.5px solid #e2e8f0;
       border-radius: 20px; cursor: pointer; transition: var(--transition); color: #4a5a6e;
     }
@@ -603,17 +590,17 @@
 
     .data-preview-wrap { margin-top: 12px; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
     .data-preview-header {
-      background: #f8fafc; padding: 8px 10px; font-size: 0.7rem;
+      background: #f8fafc; padding: 8px 10px; font-size: 0.68rem;
       font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
       color: #4a5a6e; display: flex; justify-content: space-between;
       align-items: center; border-bottom: 1.5px solid var(--border);
     }
-    .data-preview-header .count-pill { background: var(--secondary); color: #fff; padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; }
+    .data-preview-header .count-pill { background: var(--secondary); color: #fff; padding: 2px 8px; border-radius: 20px; font-size: 0.63rem; }
     .data-preview-scroll { max-height: 180px; overflow: auto; }
-    .data-preview-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+    .data-preview-table { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
     .data-preview-table th { background: #f1f5f9; padding: 5px 6px; text-align: left; font-weight: 700; color: #4a5a6e; position: sticky; top: 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
     .data-preview-table td { padding: 5px 6px; border-bottom: 1px solid #f1f5f9; color: #1a2634; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-    .data-preview-empty { padding: 24px 12px; text-align: center; font-size: 0.75rem; color: #94a3b8; }
+    .data-preview-empty { padding: 24px 12px; text-align: center; font-size: 0.73rem; color: #94a3b8; }
 
     .file-upload-area {
       border: 2px dashed #cbd5e1; border-radius: 10px;
@@ -622,50 +609,22 @@
     }
     .file-upload-area:hover, .file-upload-area.dragover { border-color: var(--secondary); background: #fff8ef; }
     .file-upload-area i { font-size: 1.6rem; color: #94a3b8; margin-bottom: 6px; display: block; }
-    .file-upload-area .upload-title { font-size: 0.8rem; font-weight: 600; color: #4a5a6e; }
-    .file-upload-area .upload-sub { font-size: 0.68rem; color: #94a3b8; margin-top: 3px; }
+    .file-upload-area .upload-title { font-size: 0.78rem; font-weight: 600; color: #4a5a6e; }
+    .file-upload-area .upload-sub { font-size: 0.66rem; color: #94a3b8; margin-top: 3px; }
     .file-upload-area input[type="file"] { display: none; }
 
     .file-pill {
       display: flex; align-items: center; justify-content: space-between;
       background: #e8f5e9; border: 1.5px solid #a5d6a7;
-      border-radius: 8px; padding: 8px 12px; font-size: 0.78rem;
+      border-radius: 8px; padding: 8px 12px; font-size: 0.76rem;
       color: #1b5e20; margin-top: 8px; font-weight: 600;
     }
     .file-pill .remove-file { background: transparent; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
     .btn-pair { display: flex; gap: 8px; }
     .btn-pair .btn { flex: 1; }
 
-    @media (max-width: 1100px) {
-      .sidebar { width: 420px; }
-      .instructions-panel { max-width: calc(100% - 100px); }
-    }
-    @media (max-width: 900px) {
-      .dashboard { flex-direction: column; }
-      .sidebar { width: 100%; height: auto; max-height: 55vh; border-right: none; border-bottom: 1px solid var(--border); }
-      .main-content { height: 45vh; }
-      .label-grid { grid-template-columns: 1fr !important; }
-      .top-bar { flex-direction: column; align-items: stretch; }
-      .top-actions { justify-content: stretch; }
-      .top-actions .btn { flex: 1; }
-      .tab-btn { font-size: 0.7rem; padding: 8px 4px; }
-      .select-toolbar { padding: 8px 14px; }
-      .login-features { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 600px) {
-      .sidebar { max-height: 60vh; }
-      .main-content { height: 40vh; }
-      .login-card { padding: 28px 20px 24px; }
-      .form-row { flex-direction: column; gap: 0; }
-      .label-grid { gap: 16px; }
-      .tab-btn span { display: none; }
-      .tab-btn i { font-size: 1rem; }
-    }
-
-    body.thermal-mode .workspace { background: #e0e5ec; }
-
     .tab-content-note {
-      font-size: 0.72rem; color: #64748b; background: #f1f5f9;
+      font-size: 0.7rem; color: #64748b; background: #f1f5f9;
       padding: 8px 12px; border-radius: 8px; margin-bottom: 14px;
       border-left: 3px solid var(--secondary); line-height: 1.5;
     }
@@ -673,31 +632,31 @@
 
     .website-search-panel { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
     .website-search-panel .search-row { display: flex; gap: 8px; align-items: center; }
-    .website-search-panel input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: #f9fbfd; }
+    .website-search-panel input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; background: #f9fbfd; }
     .website-search-panel input:focus { outline: none; border-color: var(--secondary); background: #fff; box-shadow: 0 0 0 3px rgba(242,133,0,0.1); }
     .website-search-panel .search-btn { padding: 10px 18px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .website-search-panel .search-btn:hover { background: #0f1a28; }
-    .website-search-panel .search-result { margin-top: 10px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--secondary); font-size: 0.8rem; line-height: 1.6; display: none; word-break: break-all; }
+    .website-search-panel .search-result { margin-top: 10px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--secondary); font-size: 0.78rem; line-height: 1.6; display: none; word-break: break-all; }
     .website-search-panel .search-result.show { display: block; }
     .website-search-panel .search-result strong { color: var(--primary); }
-    .website-search-panel .search-result .result-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 6px 14px; background: var(--secondary); color: #fff; border-radius: 20px; text-decoration: none; font-weight: 700; font-size: 0.75rem; transition: var(--transition); }
+    .website-search-panel .search-result .result-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 6px 14px; background: var(--secondary); color: #fff; border-radius: 20px; text-decoration: none; font-weight: 700; font-size: 0.73rem; transition: var(--transition); }
     .website-search-panel .search-result .result-link:hover { background: #d97700; }
 
-    .user-item { display: flex; align-items: center; justify-content: space-between; background: #f9fbfd; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.8rem; transition: var(--transition); }
+    .user-item { display: flex; align-items: center; justify-content: space-between; background: #f9fbfd; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.78rem; transition: var(--transition); }
     .user-item:hover { background: #f0f4fa; border-color: var(--secondary); }
     .user-item .user-name { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .user-item .user-actions { display: flex; gap: 6px; }
-    .user-item .user-actions button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 0.75rem; transition: var(--transition); color: #64748b; }
+    .user-item .user-actions button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 0.73rem; transition: var(--transition); color: #64748b; }
     .user-item .user-actions button:hover { background: #e2e8f0; color: var(--primary); }
     .user-item .user-actions button.del:hover { background: #fee2e2; color: var(--danger); }
-    .admin-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--secondary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .pending-badge { display: inline-flex; align-items: center; gap: 4px; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .trial-badge { display: inline-flex; align-items: center; gap: 4px; background: #0d47a1; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .sub-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--success); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .expired-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .admin-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--secondary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pending-badge { display: inline-flex; align-items: center; gap: 4px; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .trial-badge { display: inline-flex; align-items: center; gap: 4px; background: #0d47a1; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sub-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--success); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .expired-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
     .auto-size-banner { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1.5px solid #a5d6a7; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .auto-size-banner .asb-text { font-size: 0.75rem; font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; }
+    .auto-size-banner .asb-text { font-size: 0.73rem; font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; }
 
     .placement-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px; padding: 8px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; }
     .placement-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 8px; border: 1.5px solid transparent; cursor: grab; transition: var(--transition); user-select: none; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
@@ -705,13 +664,13 @@
     .placement-cell.dragging { opacity: 0.5; border-style: dashed; }
     .placement-cell.drag-over { border-color: var(--success); background: #f1f8e9; }
     .placement-cell .pc-icon { font-size: 1rem; color: var(--secondary); }
-    .placement-cell .pc-label { font-size: 0.6rem; font-weight: 700; color: #4a5a6e; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
+    .placement-cell .pc-label { font-size: 0.58rem; font-weight: 700; color: #4a5a6e; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
     .placement-cell .pc-grip { font-size: 0.55rem; color: #cbd5e1; }
-    .placement-hint { font-size: 0.65rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .placement-hint { font-size: 0.63rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 
     .size-slider-group { margin-bottom: 12px; }
-    .size-slider-group .ssg-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-weight: 700; color: #4a5a6e; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-    .size-slider-group .ssg-header .ssg-val { background: var(--secondary); color: #fff; padding: 1px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 700; }
+    .size-slider-group .ssg-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; font-weight: 700; color: #4a5a6e; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .size-slider-group .ssg-header .ssg-val { background: var(--secondary); color: #fff; padding: 1px 8px; border-radius: 10px; font-size: 0.63rem; font-weight: 700; }
     .size-slider-group input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; background: linear-gradient(90deg, #e2e8f0, var(--secondary)); border-radius: 4px; outline: none; cursor: pointer; }
     .size-slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
     .size-slider-group input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; border: 2px solid #fff; }
@@ -741,7 +700,7 @@
       padding: 20px 24px 14px; border-bottom: 1px solid #e2e8f0;
     }
     .edit-modal-header h3 {
-      margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--primary);
+      margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--primary);
       display: flex; align-items: center; gap: 8px;
     }
     .edit-modal-header h3 i { color: var(--secondary); }
@@ -753,14 +712,14 @@
     .edit-modal-body { padding: 18px 24px 8px; }
     .edit-modal-body .form-group { margin-bottom: 12px; }
     .edit-modal-body .form-group label {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.04em; color: #4a5a6e; margin-bottom: 4px; display: block;
     }
     .edit-modal-body .form-group input,
     .edit-modal-body .form-group select,
     .edit-modal-body .form-group textarea {
       width: 100%; padding: 9px 11px; border: 1.5px solid var(--border);
-      border-radius: 7px; font-size: 0.85rem; background: #f9fbfd;
+      border-radius: 7px; font-size: 0.83rem; background: #f9fbfd;
       font-family: inherit; transition: var(--transition);
     }
     .edit-modal-body .form-group input:focus,
@@ -773,7 +732,7 @@
       display: flex; gap: 10px; padding: 16px 24px 20px;
       border-top: 1px solid #e2e8f0; justify-content: flex-end;
     }
-    .edit-modal-footer .btn { width: auto; padding: 10px 22px; font-size: 0.85rem; }
+    .edit-modal-footer .btn { width: auto; padding: 10px 22px; font-size: 0.83rem; }
     .edit-modal-preview {
       display: flex; align-items: center; justify-content: center;
       padding: 12px; margin: 4px 0 14px; background: #f8fafc;
@@ -786,7 +745,7 @@
     .edit-image-row .upload-btn {
       padding: 0 14px; background: var(--secondary); color: #fff;
       border: none; border-radius: 7px; cursor: pointer;
-      font-size: 0.8rem; font-weight: 600; transition: var(--transition);
+      font-size: 0.78rem; font-weight: 600; transition: var(--transition);
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .edit-image-row .upload-btn:hover { background: #d97700; }
@@ -799,8 +758,8 @@
     }
     .edit-image-thumb.has-image { border-style: solid; border-color: #a5d6a7; background: #f1f8e9; }
     .edit-image-thumb .eit-img { width: 48px; height: 48px; border-radius: 6px; object-fit: contain; background: #fff; border: 1px solid #e2e8f0; flex-shrink: 0; }
-    .edit-image-thumb .eit-text { flex: 1; min-width: 0; font-size: 0.7rem; color: #64748b; word-break: break-all; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .edit-image-thumb .eit-placeholder { font-size: 0.72rem; color: #94a3b8; font-style: italic; }
+    .edit-image-thumb .eit-text { flex: 1; min-width: 0; font-size: 0.68rem; color: #64748b; word-break: break-all; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .edit-image-thumb .eit-placeholder { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
     .edit-image-thumb .eit-clear { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 4px; flex-shrink: 0; }
 
     /* ===== APPLY COMMON SETTINGS MODAL ===== */
@@ -826,7 +785,7 @@
       padding: 20px 24px 14px; border-bottom: 1px solid #e2e8f0;
     }
     .apply-modal-header h3 {
-      margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--primary);
+      margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--primary);
       display: flex; align-items: center; gap: 8px;
     }
     .apply-modal-header h3 i { color: #7b1fa2; }
@@ -838,13 +797,13 @@
     .apply-modal-body { padding: 18px 24px 12px; }
     .apply-modal-body .form-group { margin-bottom: 12px; }
     .apply-modal-body .form-group label {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.04em; color: #4a5a6e; margin-bottom: 4px; display: block;
     }
     .apply-modal-body .form-group input,
     .apply-modal-body .form-group select {
       width: 100%; padding: 9px 11px; border: 1.5px solid var(--border);
-      border-radius: 7px; font-size: 0.85rem; background: #f9fbfd;
+      border-radius: 7px; font-size: 0.83rem; background: #f9fbfd;
       font-family: inherit; transition: var(--transition);
     }
     .apply-modal-body .form-group input:focus,
@@ -856,17 +815,17 @@
       display: flex; gap: 10px; padding: 16px 24px 20px;
       border-top: 1px solid #e2e8f0; justify-content: flex-end;
     }
-    .apply-modal-footer .btn { width: auto; padding: 10px 22px; font-size: 0.85rem; }
+    .apply-modal-footer .btn { width: auto; padding: 10px 22px; font-size: 0.83rem; }
     .apply-modal-note {
       background: #f3e5f5; border-left: 3px solid #7b1fa2; padding: 8px 12px;
-      border-radius: 6px; font-size: 0.72rem; color: #4a148c;
+      border-radius: 6px; font-size: 0.7rem; color: #4a148c;
       margin-bottom: 14px; line-height: 1.5;
     }
     .field-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .apply-field-check {
       display: flex; align-items: center; gap: 8px; padding: 6px 10px;
       background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 7px;
-      font-size: 0.76rem; font-weight: 600; color: #4a5a6e;
+      font-size: 0.74rem; font-weight: 600; color: #4a5a6e;
       margin-bottom: 8px; cursor: pointer; transition: var(--transition);
     }
     .apply-field-check:hover { border-color: #7b1fa2; background: #faf3fc; }
@@ -877,130 +836,37 @@
       margin-bottom: 14px;
     }
     .apply-section-title {
-      font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+      font-size: 0.66rem; font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.06em; color: #7b1fa2; margin: 14px 0 8px;
       display: flex; align-items: center; gap: 6px;
       padding-bottom: 5px; border-bottom: 1px dashed #e2e8f0;
     }
-    .apply-section-title i { font-size: 0.78rem; }
+    .apply-section-title i { font-size: 0.76rem; }
     .apply-target-info {
       background: #fff7ed; border: 1.5px solid #f5d9b3; border-radius: 8px;
-      padding: 8px 12px; font-size: 0.75rem; color: #b86500;
+      padding: 8px 12px; font-size: 0.73rem; color: #b86500;
       font-weight: 600; display: flex; align-items: center; gap: 8px;
       margin-bottom: 12px;
     }
     .apply-target-info i { color: var(--secondary); }
 
     /* ===== QR SCAN ACTION DROPDOWN ===== */
-    .qr-scan-row {
-      padding: 8px 14px;
-      background: #faf3fc;
-      border-bottom: 1px solid #e1bee7;
-    }
-    .qr-scan-row .qr-scan-label {
-      font-size: 0.62rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #7b1fa2;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .qr-scan-row select {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #1a2634;
-      background: #fff;
-      border: 1.5px solid #ce93d8;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    .qr-scan-row select:focus {
-      outline: none;
-      border-color: #7b1fa2;
-      box-shadow: 0 0 0 3px rgba(123,31,162,0.15);
-    }
+    .qr-scan-row { padding: 8px 14px; background: #faf3fc; border-bottom: 1px solid #e1bee7; }
+    .qr-scan-row .qr-scan-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #7b1fa2; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .qr-scan-row select { width: 100%; padding: 6px 8px; font-size: 0.7rem; font-weight: 600; color: #1a2634; background: #fff; border: 1.5px solid #ce93d8; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .qr-scan-row select:focus { outline: none; border-color: #7b1fa2; box-shadow: 0 0 0 3px rgba(123,31,162,0.15); }
 
-    .qr-scan-row-both {
-      padding: 8px 14px;
-      background: #fff7ed;
-      border-bottom: 1px solid #f5d9b3;
-    }
-    .qr-scan-row-both .qr-scan-label {
-      font-size: 0.62rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #b86500;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .qr-scan-row-both select {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #1a2634;
-      background: #fff;
-      border: 1.5px solid #f5b56b;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    .qr-scan-row-both select:focus {
-      outline: none;
-      border-color: var(--secondary);
-      box-shadow: 0 0 0 3px rgba(242,133,0,0.15);
-    }
+    .qr-scan-row-both { padding: 8px 14px; background: #fff7ed; border-bottom: 1px solid #f5d9b3; }
+    .qr-scan-row-both .qr-scan-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #b86500; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .qr-scan-row-both select { width: 100%; padding: 6px 8px; font-size: 0.7rem; font-weight: 600; color: #1a2634; background: #fff; border: 1.5px solid #f5b56b; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .qr-scan-row-both select:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(242,133,0,0.15); }
 
-    .qr-scan-row-vector {
-      padding: 8px 14px;
-      background: #fff3e0;
-      border-bottom: 1px solid #ffe0b2;
-    }
-    .qr-scan-row-vector .qr-scan-label {
-      font-size: 0.62rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #e65100;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .qr-scan-row-vector select {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #1a2634;
-      background: #fff;
-      border: 1.5px solid #ffb74d;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    .qr-scan-row-vector select:focus {
-      outline: none;
-      border-color: #e65100;
-      box-shadow: 0 0 0 3px rgba(230,81,0,0.15);
-    }
+    .qr-scan-row-vector { padding: 8px 14px; background: #fff3e0; border-bottom: 1px solid #ffe0b2; }
+    .qr-scan-row-vector .qr-scan-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #e65100; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .qr-scan-row-vector select { width: 100%; padding: 6px 8px; font-size: 0.7rem; font-weight: 600; color: #1a2634; background: #fff; border: 1.5px solid #ffb74d; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .qr-scan-row-vector select:focus { outline: none; border-color: #e65100; box-shadow: 0 0 0 3px rgba(230,81,0,0.15); }
 
-    /* ===== CUSTOMER DASHBOARD TAB ===== */
-    .customer-panel { display: none; }
-    .customer-panel.active { display: block; }
-
+    /* ===== CUSTOMER / PLAN TAB ===== */
     .customer-summary {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px; margin-bottom: 16px;
@@ -1012,13 +878,13 @@
     }
     .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .summary-card .sc-icon { font-size: 1.3rem; color: var(--secondary); margin-bottom: 4px; }
-    .summary-card .sc-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-    .summary-card .sc-label { font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+    .summary-card .sc-value { font-size: 1.15rem; font-weight: 800; color: var(--primary); }
+    .summary-card .sc-label { font-size: 0.63rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
 
     .sub-status-banner {
       border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
       display: flex; align-items: center; justify-content: space-between;
-      gap: 10px; flex-wrap: wrap; font-size: 0.8rem; font-weight: 600;
+      gap: 10px; flex-wrap: wrap; font-size: 0.78rem; font-weight: 600;
     }
     .sub-status-banner.trial { background: #e3f2fd; border: 1.5px solid #90caf9; color: #0d47a1; }
     .sub-status-banner.active { background: #e8f5e9; border: 1.5px solid #a5d6a7; color: #1b5e20; }
@@ -1027,7 +893,7 @@
     .sub-status-banner .ssb-text { display: flex; align-items: center; gap: 8px; }
     .sub-status-banner .ssb-text i { font-size: 1.1rem; }
     .sub-status-banner .ssb-action { display: flex; gap: 6px; }
-    .sub-status-banner .ssb-action button { padding: 6px 14px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: none; transition: var(--transition); }
+    .sub-status-banner .ssb-action button { padding: 6px 14px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; border: none; transition: var(--transition); }
     .sub-status-banner .ssb-action .btn-renew { background: var(--secondary); color: #fff; }
     .sub-status-banner .ssb-action .btn-renew:hover { background: #d97700; }
     .sub-status-banner .ssb-action .btn-contact { background: var(--primary); color: #fff; }
@@ -1036,7 +902,7 @@
     .feature-list { list-style: none; padding: 0; margin: 0; }
     .feature-list li {
       display: flex; align-items: flex-start; gap: 8px;
-      padding: 6px 0; font-size: 0.78rem; color: #2c3e50;
+      padding: 6px 0; font-size: 0.76rem; color: #2c3e50;
       border-bottom: 1px solid #f1f5f9;
     }
     .feature-list li:last-child { border-bottom: none; }
@@ -1050,15 +916,15 @@
     }
     .pricing-card:hover { border-color: var(--secondary); transform: translateY(-3px); box-shadow: var(--shadow-md); }
     .pricing-card.featured { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(242,133,0,0.15); }
-    .pricing-card .pc-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .pricing-card .pc-name { font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
-    .pricing-card .pc-price { font-size: 1.6rem; font-weight: 900; color: var(--secondary); margin: 8px 0; }
-    .pricing-card .pc-price small { font-size: 0.7rem; font-weight: 600; color: #64748b; }
-    .pricing-card .pc-desc { font-size: 0.7rem; color: #64748b; margin-bottom: 12px; line-height: 1.4; }
+    .pricing-card .pc-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; font-size: 0.58rem; font-weight: 700; padding: 2px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pricing-card .pc-name { font-size: 0.88rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .pricing-card .pc-price { font-size: 1.5rem; font-weight: 900; color: var(--secondary); margin: 8px 0; }
+    .pricing-card .pc-price small { font-size: 0.68rem; font-weight: 600; color: #64748b; }
+    .pricing-card .pc-desc { font-size: 0.68rem; color: #64748b; margin-bottom: 12px; line-height: 1.4; }
     .pricing-card .pc-features { list-style: none; padding: 0; margin: 0 0 14px; text-align: left; }
-    .pricing-card .pc-features li { font-size: 0.7rem; padding: 3px 0; color: #2c3e50; display: flex; align-items: center; gap: 5px; }
-    .pricing-card .pc-features li i { color: var(--success); font-size: 0.65rem; }
-    .pricing-card .pc-btn { width: 100%; padding: 9px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; border: none; transition: var(--transition); }
+    .pricing-card .pc-features li { font-size: 0.68rem; padding: 3px 0; color: #2c3e50; display: flex; align-items: center; gap: 5px; }
+    .pricing-card .pc-features li i { color: var(--success); font-size: 0.63rem; }
+    .pricing-card .pc-btn { width: 100%; padding: 9px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; cursor: pointer; border: none; transition: var(--transition); }
     .pricing-card .pc-btn.primary { background: var(--secondary); color: #fff; }
     .pricing-card .pc-btn.primary:hover { background: #d97700; }
     .pricing-card .pc-btn.secondary { background: var(--primary); color: #fff; }
@@ -1066,12 +932,12 @@
     .pricing-card .pc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ===== ADMIN CUSTOMER PANEL ===== */
-    .admin-customer-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+    .admin-customer-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
     .admin-customer-table th { background: #f1f5f9; padding: 8px 6px; text-align: left; font-weight: 700; color: #4a5a6e; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
     .admin-customer-table td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; color: #1a2634; vertical-align: middle; }
     .admin-customer-table tr:hover td { background: #f8fafc; }
     .admin-customer-table .action-btns { display: flex; gap: 4px; flex-wrap: wrap; }
-    .admin-customer-table .action-btns button { padding: 3px 8px; border-radius: 5px; font-size: 0.65rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #fff; transition: var(--transition); white-space: nowrap; }
+    .admin-customer-table .action-btns button { padding: 3px 8px; border-radius: 5px; font-size: 0.63rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #fff; transition: var(--transition); white-space: nowrap; }
     .admin-customer-table .action-btns button:hover { background: #f0f4fa; border-color: var(--secondary); }
     .admin-customer-table .action-btns button.approve { background: var(--success); color: #fff; border-color: var(--success); }
     .admin-customer-table .action-btns button.approve:hover { background: #1b5e20; }
@@ -1088,21 +954,70 @@
       background: #f8fafc; border: 1.5px solid var(--border);
       border-radius: 10px; padding: 14px; margin-bottom: 12px;
     }
-    .customer-detail-card h4 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
-    .customer-detail-card .cd-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.75rem; border-bottom: 1px dashed #e2e8f0; }
+    .customer-detail-card h4 { margin: 0 0 8px; font-size: 0.83rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+    .customer-detail-card .cd-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.73rem; border-bottom: 1px dashed #e2e8f0; }
     .customer-detail-card .cd-row:last-child { border-bottom: none; }
     .customer-detail-card .cd-row .cd-label { color: #64748b; font-weight: 600; }
     .customer-detail-card .cd-row .cd-value { font-weight: 700; color: var(--primary); }
 
-    /* ===== FIREBASE STATUS BAR ===== */
-    .firebase-status {
-      font-size: 0.65rem; padding: 4px 10px; border-radius: 20px;
-      display: inline-flex; align-items: center; gap: 5px; font-weight: 600;
-      background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7;
+    /* ===== FEATURE CARDS (main dashboard) ===== */
+    .dashboard-features {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px; margin-top: 16px;
     }
-    .firebase-status.offline { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
-    .firebase-status .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .dash-feature {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 16px 14px; text-align: center;
+      box-shadow: var(--shadow-sm); transition: var(--transition);
+    }
+    .dash-feature:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--secondary); }
+    .dash-feature i { font-size: 1.6rem; color: var(--secondary); margin-bottom: 8px; display: block; }
+    .dash-feature h4 { margin: 0 0 4px; font-size: 0.82rem; font-weight: 700; color: var(--primary); }
+    .dash-feature p { margin: 0; font-size: 0.68rem; color: #64748b; line-height: 1.4; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1100px) {
+      .sidebar { width: 420px; }
+      .instructions-panel { max-width: calc(100% - 100px); }
+    }
+    @media (max-width: 900px) {
+      .dashboard { flex-direction: column; height: auto; min-height: calc(100vh - 58px); }
+      .sidebar { width: 100%; height: auto; max-height: 60vh; border-right: none; border-bottom: 1px solid var(--border); }
+      .main-content { height: auto; min-height: 40vh; }
+      .label-grid { grid-template-columns: 1fr !important; }
+      .top-bar { flex-direction: column; align-items: stretch; }
+      .top-actions { justify-content: stretch; }
+      .top-actions .btn { flex: 1; min-width: 100px; }
+      .tab-btn { font-size: 0.66rem; padding: 8px 4px; }
+      .select-toolbar { padding: 8px 14px; }
+      .top-header { padding: 8px 14px; height: 54px; }
+      .top-header .th-brand { font-size: 0.95rem; }
+      .th-btn { padding: 7px 14px; font-size: 0.76rem; }
+    }
+    @media (max-width: 600px) {
+      .sidebar { max-height: 65vh; }
+      .main-content { min-height: 45vh; }
+      .login-card { padding: 28px 20px 24px; }
+      .form-row { flex-direction: column; gap: 0; }
+      .label-grid { gap: 16px; }
+      .tab-btn span { display: none; }
+      .tab-btn i { font-size: 1rem; }
+      .top-header { height: 50px; padding: 6px 10px; }
+      .top-header .th-brand { font-size: 0.85rem; gap: 6px; }
+      .top-header .th-brand .th-logo { width: 28px; height: 28px; font-size: 0.85rem; }
+      .th-btn { padding: 6px 10px; font-size: 0.7rem; }
+      .th-user { font-size: 0.68rem; padding: 5px 9px; }
+      .dashboard-features { grid-template-columns: 1fr 1fr; }
+      .workspace { padding: 16px 14px 100px 14px; }
+      .top-bar { padding: 12px 14px; }
+      .top-bar h2 { font-size: 1rem; }
+    }
+    @media (max-width: 400px) {
+      .dashboard-features { grid-template-columns: 1fr; }
+      .top-header .th-brand span { display: none; }
+    }
+
+    body.thermal-mode .workspace { background: #e0e5ec; }
 
     @media (max-width: 600px) {
       .apply-fields-grid { grid-template-columns: 1fr; }
@@ -1114,123 +1029,110 @@
 </head>
 <body>
 
-<!-- ============ LOGIN ============ -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-screen-inner">
-    <div class="login-left">
-      <div class="login-card">
-        <div class="login-brand">
-          <div class="logo-circle"><i class="fas fa-tag"></i></div>
-          <h1>LynkKar Pro Label Studio</h1>
-          <p>Sign in to access your dashboard</p>
-        </div>
-        <div class="login-error" id="loginError">
-          <i class="fas fa-exclamation-circle"></i>
-          <span id="loginErrorMsg">Invalid email or password.</span>
-        </div>
-        <form id="loginForm" autocomplete="off">
-          <div class="login-field">
-            <label for="loginEmail">Email</label>
-            <div class="field-wrap">
-              <i class="fas fa-envelope field-icon"></i>
-              <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
-            </div>
-          </div>
-          <div class="login-field">
-            <label for="loginPass">Password</label>
-            <div class="field-wrap">
-              <i class="fas fa-lock field-icon"></i>
-              <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
-              <button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password">
-                <i class="fas fa-eye" id="togglePassIcon"></i>
-              </button>
-            </div>
-          </div>
-          <button type="submit" class="login-btn" id="loginBtn">
-            <i class="fas fa-sign-in-alt"></i> Sign In
-          </button>
-          <div style="text-align:center; margin-top:12px;">
-            <button type="button" class="login-btn secondary" id="showSignupBtn" style="padding:10px; font-size:0.85rem;">
-              <i class="fas fa-user-plus"></i> Create Account
-            </button>
-          </div>
-        </form>
-        <div class="login-footer">
-          © 2025 LynkKar Pro Label Studio. All Rights Reserved.<br>
-          <a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp">
-            <i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757
-          </a>
-          <div style="margin-top:6px;"><span class="firebase-status" id="firebaseStatus"><span class="dot"></span> Firebase connected</span></div>
-        </div>
-      </div>
-    </div>
+<!-- ============ TOP HEADER (always visible) ============ -->
+<header class="top-header">
+  <div class="th-brand" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <div class="th-logo"><i class="fas fa-tag"></i></div>
+    <span>LynkKar Pro Label Studio</span>
+  </div>
+  <div class="th-actions" id="topActions">
+    <button class="th-btn outline" id="topLoginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+    <button class="th-btn primary" id="topSignupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
+  </div>
+</header>
 
-    <!-- Animated features on login screen -->
-    <div class="login-features">
-      <div class="feature-card">
-        <i class="fas fa-barcode"></i>
-        <h4>Barcode & QR Labels</h4>
-        <p>Generate EAN, UPC, CODE128 barcodes and QR codes instantly</p>
+<!-- ============ LOGIN MODAL ============ -->
+<div class="login-modal-overlay" id="loginModal">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-circle"><i class="fas fa-tag"></i></div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to your LynkKar Pro account</p>
+    </div>
+    <div class="login-error" id="loginError">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="loginErrorMsg">Invalid email or password.</span>
+    </div>
+    <form id="loginForm" autocomplete="off">
+      <div class="login-field">
+        <label for="loginEmail">Email</label>
+        <div class="field-wrap">
+          <i class="fas fa-envelope field-icon"></i>
+          <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+        </div>
       </div>
-      <div class="feature-card">
-        <i class="fas fa-file-csv"></i>
-        <h4>Bulk Import</h4>
-        <p>Upload CSV, Excel or JSON to create hundreds of labels in seconds</p>
+      <div class="login-field">
+        <label for="loginPass">Password</label>
+        <div class="field-wrap">
+          <i class="fas fa-lock field-icon"></i>
+          <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
+          <button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password">
+            <i class="fas fa-eye" id="togglePassIcon"></i>
+          </button>
+        </div>
       </div>
-      <div class="feature-card">
-        <i class="fas fa-paint-brush"></i>
-        <h4>Custom Designs</h4>
-        <p>Drag-and-drop placement, themes, fonts and full color control</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-file-pdf"></i>
-        <h4>PDF & Vector Export</h4>
-        <p>Print-ready PDFs plus .EPS and .AI vector files for designers</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-cloud"></i>
-        <h4>Cloud Sync</h4>
-        <p>Your labels and settings sync securely via Firebase</p>
-      </div>
-      <div class="feature-card">
-        <i class="fas fa-crown"></i>
-        <h4>3-Day Free Trial</h4>
-        <p>Full access for 3 days. Subscribe anytime to continue</p>
-      </div>
+      <button type="submit" class="login-btn" id="loginBtn">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+    <div class="login-switch">
+      Don't have an account? <a id="switchToSignup">Create one</a>
+    </div>
+    <div class="login-footer">
+      © 2025 LynkKar Pro Label Studio. All Rights Reserved.<br>
+      <a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp">
+        <i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757
+      </a>
     </div>
   </div>
 </div>
 
 <!-- ============ SIGNUP MODAL ============ -->
-<div class="auth-modal-overlay" id="signupModal">
-  <div class="auth-modal">
-    <button class="auth-close" id="signupCloseBtn"><i class="fas fa-times"></i></button>
-    <h2><i class="fas fa-user-plus" style="color:var(--secondary);"></i> Create Account</h2>
-    <p class="auth-sub">Start your 3-day free trial. No credit card required.</p>
-    <div class="auth-msg" id="signupMsg"></div>
+<div class="login-modal-overlay" id="signupModal">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-circle"><i class="fas fa-user-plus"></i></div>
+      <h1>Create Account</h1>
+      <p>Start your 3-day free trial — no card required</p>
+    </div>
+    <div class="login-error" id="signupMsg"></div>
     <form id="signupForm">
-      <div class="form-group">
+      <div class="login-field">
         <label>Full Name</label>
-        <input type="text" id="signupName" placeholder="Your name" required>
+        <div class="field-wrap">
+          <i class="fas fa-user field-icon"></i>
+          <input type="text" id="signupName" placeholder="Your name" required>
+        </div>
       </div>
-      <div class="form-group">
+      <div class="login-field">
         <label>Email</label>
-        <input type="email" id="signupEmail" placeholder="you@example.com" required>
+        <div class="field-wrap">
+          <i class="fas fa-envelope field-icon"></i>
+          <input type="email" id="signupEmail" placeholder="you@example.com" required>
+        </div>
       </div>
-      <div class="form-group">
+      <div class="login-field">
         <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="At least 6 characters" required>
+        <div class="field-wrap">
+          <i class="fas fa-lock field-icon"></i>
+          <input type="password" id="signupPassword" placeholder="At least 6 characters" required>
+        </div>
       </div>
-      <div class="form-group">
+      <div class="login-field">
         <label>Confirm Password</label>
-        <input type="password" id="signupConfirm" placeholder="Re-enter password" required>
+        <div class="field-wrap">
+          <i class="fas fa-lock field-icon"></i>
+          <input type="password" id="signupConfirm" placeholder="Re-enter password" required>
+        </div>
       </div>
-      <div class="auth-actions">
-        <button type="button" class="btn btn-outline" id="signupCancelBtn">Cancel</button>
-        <button type="submit" class="btn btn-success" id="signupSubmitBtn"><i class="fas fa-check"></i> Create Account</button>
-      </div>
+      <button type="submit" class="login-btn" id="signupSubmitBtn" style="background: linear-gradient(135deg, var(--success) 0%, #1b5e20 100%);">
+        <i class="fas fa-check"></i> Create Account
+      </button>
     </form>
-    <div style="margin-top:14px; font-size:0.72rem; color:#94a3b8; text-align:center; line-height:1.5;">
+    <div class="login-switch">
+      Already have an account? <a id="switchToLogin">Sign in</a>
+    </div>
+    <div style="margin-top:12px; font-size:0.68rem; color:#94a3b8; text-align:center; line-height:1.5;">
       By signing up you agree to our Terms of Service.<br>
       Your account will be reviewed by an admin before activation.
     </div>
@@ -1252,12 +1154,9 @@
           <i class="fas fa-tag main-icon"></i>
           <span>LynkKar Pro</span>
         </div>
-        <div class="header-actions">
-          <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> <span id="userBadgeName">User</span></span>
-          <button class="logout-btn" id="logoutBtn" title="Sign out">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
-        </div>
+        <button class="logout-btn" id="logoutBtn" title="Sign out">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
       </div>
 
       <div class="tab-nav">
@@ -1348,8 +1247,8 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label style="font-size: 0.7rem;">Strategy</label>
-                <select id="genStrategy" style="font-size: 0.8rem; padding: 6px 8px;">
+                <label style="font-size: 0.68rem;">Strategy</label>
+                <select id="genStrategy" style="font-size: 0.78rem; padding: 6px 8px;">
                   <option value="sequential">Sequential</option>
                   <option value="timestamp">Timestamp</option>
                   <option value="random">Random</option>
@@ -1358,23 +1257,23 @@
                 </select>
               </div>
               <div class="form-group">
-                <label style="font-size: 0.7rem;">Length</label>
-                <input type="number" id="genLength" value="12" min="4" max="30" style="padding: 6px 8px; font-size: 0.8rem;">
+                <label style="font-size: 0.68rem;">Length</label>
+                <input type="number" id="genLength" value="12" min="4" max="30" style="padding: 6px 8px; font-size: 0.78rem;">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label style="font-size: 0.7rem;">Prefix</label>
-                <input type="text" id="genPrefix" placeholder="e.g. SKU-" maxlength="8" style="padding: 6px 8px; font-size: 0.8rem;">
+                <label style="font-size: 0.68rem;">Prefix</label>
+                <input type="text" id="genPrefix" placeholder="e.g. SKU-" maxlength="8" style="padding: 6px 8px; font-size: 0.78rem;">
               </div>
               <div class="form-group">
-                <label style="font-size: 0.7rem;">Suffix</label>
-                <input type="text" id="genSuffix" placeholder="e.g. -PK" maxlength="8" style="padding: 6px 8px; font-size: 0.8rem;">
+                <label style="font-size: 0.68rem;">Suffix</label>
+                <input type="text" id="genSuffix" placeholder="e.g. -PK" maxlength="8" style="padding: 6px 8px; font-size: 0.78rem;">
               </div>
             </div>
             <div class="form-group" style="margin-bottom: 8px;">
-              <label style="font-size: 0.7rem;">Start Number</label>
-              <input type="number" id="genStart" value="1001" min="0" style="padding: 6px 8px; font-size: 0.8rem;">
+              <label style="font-size: 0.68rem;">Start Number</label>
+              <input type="number" id="genStart" value="1001" min="0" style="padding: 6px 8px; font-size: 0.78rem;">
             </div>
             <div class="switch-row" style="margin-top: 4px;">
               <span><i class="fas fa-redo"></i> Auto-increment each generation</span>
@@ -1385,8 +1284,8 @@
               <span id="genPreview">123456789012</span>
             </div>
             <div class="form-row" style="margin-top: 10px;">
-              <button type="button" class="btn" id="applyGenBtn" style="padding: 8px; font-size: 0.8rem;"><i class="fas fa-check"></i> Apply</button>
-              <button type="button" class="btn btn-outline" id="rerollGenBtn" style="padding: 8px; font-size: 0.8rem;"><i class="fas fa-dice"></i> Reroll</button>
+              <button type="button" class="btn" id="applyGenBtn" style="padding: 8px; font-size: 0.78rem;"><i class="fas fa-check"></i> Apply</button>
+              <button type="button" class="btn btn-outline" id="rerollGenBtn" style="padding: 8px; font-size: 0.78rem;"><i class="fas fa-dice"></i> Reroll</button>
             </div>
           </div>
 
@@ -1522,12 +1421,12 @@
         <div class="section-title"><i class="fas fa-users"></i> User Management</div>
         <div id="userListContainer" style="margin-bottom: 12px;"></div>
         <div class="form-row" style="gap: 8px;">
-          <div class="form-group" style="flex:1;"><input type="text" id="newUsername" placeholder="New username" style="font-size: 0.8rem; padding: 8px 10px;"></div>
-          <div class="form-group" style="flex:1;"><input type="password" id="newUserPassword" placeholder="Password" style="font-size: 0.8rem; padding: 8px 10px;"></div>
+          <div class="form-group" style="flex:1;"><input type="text" id="newUsername" placeholder="New username" style="font-size: 0.78rem; padding: 8px 10px;"></div>
+          <div class="form-group" style="flex:1;"><input type="password" id="newUserPassword" placeholder="Password" style="font-size: 0.78rem; padding: 8px 10px;"></div>
         </div>
         <div class="form-row" style="gap: 8px;">
           <div class="form-group" style="flex:1;">
-            <select id="newUserRole" style="font-size: 0.8rem; padding: 8px 10px;">
+            <select id="newUserRole" style="font-size: 0.78rem; padding: 8px 10px;">
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
@@ -1538,10 +1437,10 @@
         </div>
 
         <div class="section-title"><i class="fas fa-key"></i> Change Password</div>
-        <div class="form-group"><input type="password" id="currentPassword" placeholder="Current password" style="font-size: 0.8rem; padding: 8px 10px;"></div>
+        <div class="form-group"><input type="password" id="currentPassword" placeholder="Current password" style="font-size: 0.78rem; padding: 8px 10px;"></div>
         <div class="form-row" style="gap: 8px;">
-          <div class="form-group" style="flex:1;"><input type="password" id="newPassword" placeholder="New password" style="font-size: 0.8rem; padding: 8px 10px;"></div>
-          <div class="form-group" style="flex:1;"><input type="password" id="confirmPassword" placeholder="Confirm new password" style="font-size: 0.8rem; padding: 8px 10px;"></div>
+          <div class="form-group" style="flex:1;"><input type="password" id="newPassword" placeholder="New password" style="font-size: 0.78rem; padding: 8px 10px;"></div>
+          <div class="form-group" style="flex:1;"><input type="password" id="confirmPassword" placeholder="Confirm new password" style="font-size: 0.78rem; padding: 8px 10px;"></div>
         </div>
         <button type="button" class="btn btn-sm" id="changePasswordBtn" style="margin-bottom: 8px;"><i class="fas fa-save"></i> Update Password</button>
 
@@ -1778,11 +1677,11 @@
         <div class="dropdown" style="position:relative; display:inline-block;">
           <button class="btn" style="width: auto; padding: 10px 20px; background:#0d47a1;" id="downloadCodesBtn"><i class="fas fa-barcode"></i> Codes <i class="fas fa-caret-down"></i></button>
           <div class="dropdown-menu" id="codesDropdown" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1.5px solid var(--border); border-radius:10px; box-shadow:var(--shadow-md); min-width:290px; z-index:50; overflow:hidden; margin-top:4px;">
-            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#0d47a1; background:#eef6ff; border-bottom:1px solid #bbdefb;">Barcode Downloads</div>
+            <div style="padding:6px 10px; font-size:0.63rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#0d47a1; background:#eef6ff; border-bottom:1px solid #bbdefb;">Barcode Downloads</div>
             <button class="dd-item" data-code="barcode" data-type="pdf"><i class="fas fa-file-pdf" style="color:#c62828;"></i> All Barcodes as PDF</button>
             <button class="dd-item" data-code="barcode" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> All Barcodes as JPG (ZIP)</button>
 
-            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#7b1fa2; background:#f3e5f5; border-bottom:1px solid #e1bee7; border-top:1px solid #e2e8f0;">QR Code Downloads</div>
+            <div style="padding:6px 10px; font-size:0.63rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#7b1fa2; background:#f3e5f5; border-bottom:1px solid #e1bee7; border-top:1px solid #e2e8f0;">QR Code Downloads</div>
             <div class="qr-scan-row">
               <div class="qr-scan-label"><i class="fas fa-mobile-alt"></i> What QR opens when scanned</div>
               <select id="qrScanAction">
@@ -1798,7 +1697,7 @@
             <button class="dd-item" data-code="qrcode" data-type="pdf"><i class="fas fa-file-pdf" style="color:#c62828;"></i> All QR Codes as PDF</button>
             <button class="dd-item" data-code="qrcode" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> All QR Codes as JPG (ZIP)</button>
 
-            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#b86500; background:#fff7ed; border-bottom:1px solid #f5d9b3; border-top:1px solid #e2e8f0;">Both Together</div>
+            <div style="padding:6px 10px; font-size:0.63rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#b86500; background:#fff7ed; border-bottom:1px solid #f5d9b3; border-top:1px solid #e2e8f0;">Both Together</div>
             <div class="qr-scan-row-both">
               <div class="qr-scan-label"><i class="fas fa-mobile-alt"></i> What QR opens when scanned</div>
               <select id="qrScanActionBoth">
@@ -1814,7 +1713,7 @@
             <button class="dd-item" data-code="both" data-type="pdf"><i class="fas fa-file-pdf" style="color:#c62828;"></i> Barcode + QR as PDF</button>
             <button class="dd-item" data-code="both" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> Barcode + QR as JPG (ZIP)</button>
 
-            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#e65100; background:#fff3e0; border-bottom:1px solid #ffe0b2; border-top:1px solid #e2e8f0;">Vector Formats (Adobe Illustrator)</div>
+            <div style="padding:6px 10px; font-size:0.63rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#e65100; background:#fff3e0; border-bottom:1px solid #ffe0b2; border-top:1px solid #e2e8f0;">Vector Formats (Adobe Illustrator)</div>
             <div class="qr-scan-row-vector">
               <div class="qr-scan-label"><i class="fas fa-mobile-alt"></i> What QR opens when scanned</div>
               <select id="qrScanActionVector">
@@ -1854,6 +1753,16 @@
     <div class="workspace">
       <div class="label-grid" id="labelGrid">
         <div class="empty-state"><i class="fas fa-barcode"></i><span>Configure options and click <strong>"Generate Labels"</strong>.</span></div>
+      </div>
+
+      <!-- Feature highlights on the main dashboard -->
+      <div class="dashboard-features" id="dashboardFeatures">
+        <div class="dash-feature"><i class="fas fa-barcode"></i><h4>Barcode & QR</h4><p>EAN, UPC, CODE128, QR and more</p></div>
+        <div class="dash-feature"><i class="fas fa-file-csv"></i><h4>Bulk Import</h4><p>CSV, Excel and JSON supported</p></div>
+        <div class="dash-feature"><i class="fas fa-paint-brush"></i><h4>Custom Design</h4><p>Themes, fonts and drag-drop layout</p></div>
+        <div class="dash-feature"><i class="fas fa-file-pdf"></i><h4>PDF & Vector</h4><p>Export to PDF, JPG, EPS and AI</p></div>
+        <div class="dash-feature"><i class="fas fa-cloud"></i><h4>Cloud Sync</h4><p>Your labels sync across devices</p></div>
+        <div class="dash-feature"><i class="fas fa-crown"></i><h4>3-Day Free Trial</h4><p>Full access, no card required</p></div>
       </div>
     </div>
 
@@ -2127,9 +2036,9 @@
       <div class="form-group">
         <label style="display:flex; align-items:center; justify-content:space-between;">
           <span>Designer snapshot (bg / border color / font / align / line-height…)</span>
-          <button type="button" class="btn btn-outline btn-sm" id="applyCopyDesignerBtn" style="padding: 4px 10px; font-size: 0.7rem;"><i class="fas fa-copy"></i> Copy from Settings</button>
+          <button type="button" class="btn btn-outline btn-sm" id="applyCopyDesignerBtn" style="padding: 4px 10px; font-size: 0.68rem;"><i class="fas fa-copy"></i> Copy from Settings</button>
         </label>
-        <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:7px; padding:8px 10px; font-size:0.72rem; color:#4a5a6e; line-height:1.6;" id="applyDesignerPreview">No designer settings loaded yet.</div>
+        <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:7px; padding:8px 10px; font-size:0.7rem; color:#4a5a6e; line-height:1.6;" id="applyDesignerPreview">No designer settings loaded yet.</div>
       </div>
     </div>
     <div class="apply-modal-footer">
@@ -2142,7 +2051,7 @@
 <div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
 
 <script>
-  // ==================== FIREBASE CONFIG ====================
+  // ==================== FIREBASE CONFIG (kept internal, not shown in UI) ====================
   const firebaseConfig = {
     apiKey: "AIzaSyACXlWavyX-Bn1jgrOgtJKuSpwaCA3rYBs",
     authDomain: "lynkkar-solutions.firebaseapp.com",
@@ -2160,11 +2069,11 @@
     fbDb = firebase.firestore();
     firebaseReady = true;
   } catch (e) {
-    console.warn('Firebase init failed:', e);
+    console.warn('Cloud init failed:', e);
     firebaseReady = false;
   }
 
-  // ==================== CONSTANTS & HELPERS ====================
+  // ==================== CONSTANTS ====================
   const USERS_KEY = 'lynkkar_users';
   const SESSION_KEY = 'lynkkar_logged_in_user';
   const PLACEMENT_KEY = 'lynkkar_placement_order';
@@ -2178,7 +2087,6 @@
   const DEFAULT_QR_SIZE = 84;
   const DEFAULT_BARCODE_BAR = 0;
 
-  // Subscription constants
   const TRIAL_DAYS = 3;
   const SUBSCRIPTION_PRICES = {
     starter: { name: 'Starter', price: 999, period: 'month', features: ['Up to 500 labels/month', 'Basic barcode & QR', 'PDF export', 'Email support'] },
@@ -2231,16 +2139,8 @@
   }
 
   // ==================== AUTH STATE ====================
-  let currentUser = null;        // { uid, email, name, role, subscription, trialStart, ... }
-  let currentUserDocRef = null;
+  let currentUser = null;
   let userListenerUnsub = null;
-
-  function setFirebaseStatus(online) {
-    const el = $('firebaseStatus');
-    if (!el) return;
-    if (online) { el.className = 'firebase-status'; el.innerHTML = '<span class="dot"></span> Firebase connected'; }
-    else { el.className = 'firebase-status offline'; el.innerHTML = '<span class="dot"></span> Firebase offline — local mode'; }
-  }
 
   // ==================== LOCAL AUTH FALLBACK ====================
   function randomSalt() {
@@ -2268,12 +2168,12 @@
     let users = getLocalUsers();
     if (!users.length) {
       const salt = randomSalt();
-      users = [{ username: 'admin', email: 'admin@lynkkar.local', salt, hash: await hashPassword('Pakistan@5757', salt), role: 'admin', status: 'active', subscription: 'business', trialStart: null }];
+      users = [{ username: 'admin', email: 'admin@lynkkar.local', salt, hash: await hashPassword('Pakistan@5757', salt), role: 'admin', status: 'active', subscription: 'business', trialStart: null, trialEnd: null }];
     }
     saveLocalUsers(users);
   }
 
-  // ==================== FIRESTORE USER DOC ====================
+  // ==================== USER DOC ====================
   async function ensureUserDoc(uid, data) {
     if (!firebaseReady || !uid) return null;
     const ref = fbDb.collection('users').doc(uid);
@@ -2286,8 +2186,8 @@
         email: data.email || '',
         name: data.name || '',
         role: 'user',
-        status: 'pending',           // pending | active | rejected
-        subscription: 'trial',       // trial | starter | pro | business | expired
+        status: 'pending',
+        subscription: 'trial',
         trialStart,
         trialEnd,
         subscriptionStart: null,
@@ -2298,13 +2198,6 @@
       await ref.set(doc);
       return { uid, ...doc };
     }
-    return { uid, ...snap.data() };
-  }
-
-  async function loadUserDoc(uid) {
-    if (!firebaseReady || !uid) return null;
-    const snap = await fbDb.collection('users').doc(uid).get();
-    if (!snap.exists) return null;
     return { uid, ...snap.data() };
   }
 
@@ -2332,50 +2225,78 @@
     return computeSubscriptionState(u).canUse;
   }
 
-  // ==================== LOGIN ====================
-  const loginScreen = $('loginScreen'), dashboardApp = $('dashboardApp');
-  const loginEmail = $('loginEmail'), loginPass = $('loginPass');
-  const loginError = $('loginError'), loginErrorMsg = $('loginErrorMsg'), loginBtn = $('loginBtn');
+  // ==================== UI ROUTING ====================
+  const loginModal = $('loginModal'), signupModal = $('signupModal');
+  const dashboardApp = $('dashboardApp');
+  const topActions = $('topActions');
+
+  function updateTopActions() {
+    if (currentUser) {
+      const roleTag = currentUser.role === 'admin' ? '<span class="role-tag">Admin</span>' : '';
+      topActions.innerHTML = `
+        <span class="th-user"><i class="fas fa-user-circle"></i> ${escapeHtml((currentUser.name || currentUser.email || 'User').split(' ')[0])} ${roleTag}</span>
+        <button class="th-btn outline" id="topDashboardBtn"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+        <button class="th-btn primary" id="topLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      `;
+      $('topDashboardBtn').addEventListener('click', () => {
+        dashboardApp.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      $('topLogoutBtn').addEventListener('click', handleLogout);
+    } else {
+      topActions.innerHTML = `
+        <button class="th-btn outline" id="topLoginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+        <button class="th-btn primary" id="topSignupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
+      `;
+      $('topLoginBtn').addEventListener('click', () => { openLogin(); });
+      $('topSignupBtn').addEventListener('click', () => { openSignup(); });
+    }
+  }
+
+  function openLogin() { closeSignup(); loginModal.classList.add('show'); $('loginError').classList.remove('show'); setTimeout(() => $('loginEmail').focus(), 200); }
+  function closeLogin() { loginModal.classList.remove('show'); }
+  function openSignup() { closeLogin(); signupModal.classList.add('show'); $('signupMsg').classList.remove('show'); setTimeout(() => $('signupName').focus(), 200); }
+  function closeSignup() { signupModal.classList.remove('show'); }
+
+  $('switchToSignup').addEventListener('click', openSignup);
+  $('switchToLogin').addEventListener('click', openLogin);
+  loginModal.addEventListener('click', (e) => { if (e.target === loginModal) closeLogin(); });
+  signupModal.addEventListener('click', (e) => { if (e.target === signupModal) closeSignup(); });
 
   function showDashboard() {
-    loginScreen.classList.add('hidden');
     dashboardApp.classList.remove('hidden');
     setTimeout(() => {
       updatePreview(); applyStickerSize(); renderImagePreview(); renderUserList();
       initPlacementGrid(); applyTextSizes(); applyCodeSizes(); renderGrid();
       renderCustomerPanel();
-      if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'admin@lynkkar.local')) {
+      if (currentUser && currentUser.role === 'admin') {
         $('adminTabBtn').style.display = '';
         renderAdminCustomerPanel();
       } else {
         $('adminTabBtn').style.display = 'none';
       }
-      updateUserBadge();
     }, 30);
   }
-  function showLogin() {
-    loginScreen.classList.remove('hidden');
+
+  async function handleLogout() {
+    if (!confirm('Sign out of LynkKar Pro Label Studio?')) return;
+    if (firebaseReady && fbAuth.currentUser) { try { await fbAuth.signOut(); } catch (e) {} }
+    sessionStorage.removeItem(SESSION_KEY);
+    currentUser = null;
+    if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
     dashboardApp.classList.add('hidden');
-    loginPass.value = '';
-    loginError.classList.remove('show');
-  }
-  function updateUserBadge() {
-    const nameEl = $('userBadgeName');
-    if (currentUser) {
-      const display = currentUser.name || currentUser.email || 'User';
-      nameEl.innerText = display.length > 18 ? display.slice(0, 16) + '…' : display;
-      $('userBadge').title = currentUser.email + (currentUser.role === 'admin' ? ' (Admin)' : '');
-    } else nameEl.innerText = 'Guest';
+    updateTopActions();
+    showToast('Signed out successfully', 'fa-sign-out-alt');
   }
 
+  // ==================== LOGIN / SIGNUP ====================
   async function doLogin(email, password) {
     if (firebaseReady) {
       try {
-        const cred = await fbAuth.signInWithEmailAndPassword(email, password);
-        // Auth state listener will handle the rest
+        await fbAuth.signInWithEmailAndPassword(email, password);
         return { ok: true };
       } catch (err) {
-        // If Firebase user doesn't exist yet but local admin exists, fall back
+        // Fallback to local admin
         const localUsers = getLocalUsers();
         const local = localUsers.find(u => (u.email || u.username) === email);
         if (local) {
@@ -2385,15 +2306,21 @@
             return { ok: true, local: true };
           }
         }
-        return { ok: false, error: err.message };
+        // Friendly error messages
+        let msg = 'Login failed. Please check your email and password.';
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email. Please sign up first.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password. Please try again.';
+        else if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please wait a moment and try again.';
+        else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+        return { ok: false, error: msg };
       }
     } else {
-      // Offline mode: local users only
       const localUsers = getLocalUsers();
       const local = localUsers.find(u => (u.email || u.username) === email);
-      if (!local) return { ok: false, error: 'No account found' };
+      if (!local) return { ok: false, error: 'No account found. Please sign up.' };
       const h = await hashPassword(password, local.salt);
-      if (h !== local.hash) return { ok: false, error: 'Incorrect password' };
+      if (h !== local.hash) return { ok: false, error: 'Incorrect password.' };
       currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
       return { ok: true, local: true };
     }
@@ -2401,57 +2328,32 @@
 
   $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    loginBtn.disabled = true;
-    const email = loginEmail.value.trim();
-    const pass = loginPass.value;
+    const btn = $('loginBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+    const email = $('loginEmail').value.trim();
+    const pass = $('loginPass').value;
     const res = await doLogin(email, pass);
-    loginBtn.disabled = false;
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
     if (res.ok) {
+      $('loginError').classList.remove('show');
+      closeLogin();
       if (res.local) {
-        // local fallback: show dashboard directly
-        loginError.classList.remove('show');
+        updateTopActions();
         showDashboard();
         showToast('Welcome back, ' + (currentUser.name || 'Admin') + '!', 'fa-user-check');
-      } else {
-        // Firebase auth state listener will call showDashboard
-        loginError.classList.remove('show');
       }
+      // For cloud login, the auth listener will handle the rest
     } else {
-      loginErrorMsg.innerText = 'Login failed: ' + (res.error || 'Unknown error');
-      loginError.classList.add('show');
+      $('loginErrorMsg').innerText = res.error;
+      $('loginError').classList.add('show');
     }
   });
 
   $('togglePassBtn').addEventListener('click', () => {
     const icon = $('togglePassIcon');
-    if (loginPass.type === 'password') { loginPass.type = 'text'; icon.className = 'fas fa-eye-slash'; }
-    else { loginPass.type = 'password'; icon.className = 'fas fa-eye'; }
+    if ($('loginPass').type === 'password') { $('loginPass').type = 'text'; icon.className = 'fas fa-eye-slash'; }
+    else { $('loginPass').type = 'password'; icon.className = 'fas fa-eye'; }
   });
-  $('logoutBtn').addEventListener('click', async () => {
-    if (confirm('Sign out of LynkKar Pro Label Studio?')) {
-      if (firebaseReady && fbAuth.currentUser) { try { await fbAuth.signOut(); } catch (e) {} }
-      sessionStorage.removeItem(SESSION_KEY);
-      currentUser = null;
-      if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
-      showLogin(); loginEmail.value = ''; loginPass.value = '';
-      showToast('Signed out successfully', 'fa-sign-out-alt');
-    }
-  });
-
-  // ==================== SIGNUP ====================
-  const signupModal = $('signupModal');
-  function openSignup() { signupModal.classList.add('show'); $('signupMsg').classList.remove('show'); }
-  function closeSignup() { signupModal.classList.remove('show'); }
-  $('showSignupBtn').addEventListener('click', openSignup);
-  $('signupCloseBtn').addEventListener('click', closeSignup);
-  $('signupCancelBtn').addEventListener('click', closeSignup);
-  signupModal.addEventListener('click', (e) => { if (e.target === signupModal) closeSignup(); });
-
-  function showSignupMsg(msg, isError) {
-    const el = $('signupMsg');
-    el.innerText = msg;
-    el.className = 'auth-msg show ' + (isError ? 'error' : 'success');
-  }
 
   $('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2459,9 +2361,17 @@
     const email = $('signupEmail').value.trim();
     const pass = $('signupPassword').value;
     const confirm = $('signupConfirm').value;
-    if (!name || !email || !pass) return showSignupMsg('Please fill all fields.', true);
-    if (pass.length < 6) return showSignupMsg('Password must be at least 6 characters.', true);
-    if (pass !== confirm) return showSignupMsg('Passwords do not match.', true);
+    const msg = $('signupMsg');
+    const showMsg = (text, isError) => {
+      msg.innerText = text;
+      msg.className = 'login-error show';
+      msg.style.background = isError ? '#ffebee' : '#e8f5e9';
+      msg.style.color = isError ? '#b71c1c' : '#1b5e20';
+      msg.style.borderColor = isError ? '#ef9a9a' : '#a5d6a7';
+    };
+    if (!name || !email || !pass) return showMsg('Please fill all fields.', true);
+    if (pass.length < 6) return showMsg('Password must be at least 6 characters.', true);
+    if (pass !== confirm) return showMsg('Passwords do not match.', true);
 
     const btn = $('signupSubmitBtn');
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
@@ -2471,22 +2381,23 @@
         const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
         await cred.user.updateProfile({ displayName: name });
         await ensureUserDoc(cred.user.uid, { email, name });
-        // Sign out immediately so they must wait for admin approval
         await fbAuth.signOut();
-        showSignupMsg('Account created! An admin will review and approve your account shortly.', false);
-        showToast('Account created — awaiting admin approval', 'fa-check-circle');
-        setTimeout(closeSignup, 2500);
-        $('signupForm').reset();
+        showMsg('Account created! An admin will review and approve your account shortly.', false);
+        showToast('Account created — awaiting approval', 'fa-check-circle');
+        setTimeout(() => { closeSignup(); $('signupForm').reset(); }, 2500);
       } catch (err) {
-        showSignupMsg('Could not create account: ' + err.message, true);
+        let m = 'Could not create account. ' + err.message;
+        if (err.code === 'auth/email-already-in-use') m = 'This email is already registered. Please sign in instead.';
+        else if (err.code === 'auth/invalid-email') m = 'Please enter a valid email address.';
+        else if (err.code === 'auth/weak-password') m = 'Password is too weak. Use at least 6 characters.';
+        showMsg(m, true);
       } finally {
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
       }
     } else {
-      // Offline / local signup
       const users = getLocalUsers();
       if (users.find(u => (u.email || u.username) === email)) {
-        showSignupMsg('An account with this email already exists.', true);
+        showMsg('An account with this email already exists.', true);
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
         return;
       }
@@ -2498,41 +2409,38 @@
         subscription: 'trial', trialStart: now, trialEnd: now + TRIAL_DAYS * 24 * 60 * 60 * 1000
       });
       saveLocalUsers(users);
-      showSignupMsg('Account created! An admin will approve your account shortly.', false);
-      showToast('Account created — awaiting admin approval', 'fa-check-circle');
-      setTimeout(closeSignup, 2500);
-      $('signupForm').reset();
+      showMsg('Account created! An admin will approve your account shortly.', false);
+      showToast('Account created — awaiting approval', 'fa-check-circle');
+      setTimeout(() => { closeSignup(); $('signupForm').reset(); }, 2500);
       btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
     }
   });
 
-  // ==================== FIREBASE AUTH LISTENER ====================
+  // ==================== AUTH LISTENER ====================
   function initAuthListener() {
-    if (!firebaseReady) { setFirebaseStatus(false); return; }
-    setFirebaseStatus(true);
+    if (!firebaseReady) return;
     fbAuth.onAuthStateChanged(async (user) => {
       if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
       if (user) {
         const doc = await ensureUserDoc(user.uid, { email: user.email, name: user.displayName || user.email });
-        if (!doc) { showLogin(); return; }
+        if (!doc) return;
         currentUser = { uid: user.uid, email: user.email, name: user.displayName || doc.name || user.email, ...doc };
-        // Realtime updates
         userListenerUnsub = fbDb.collection('users').doc(user.uid).onSnapshot(snap => {
           if (snap.exists) {
             currentUser = { uid: user.uid, email: user.email, name: user.displayName || snap.data().name || user.email, ...snap.data() };
-            updateUserBadge();
+            updateTopActions();
             renderCustomerPanel();
             if (currentUser.role === 'admin') { $('adminTabBtn').style.display = ''; renderAdminCustomerPanel(); }
             else $('adminTabBtn').style.display = 'none';
           }
         });
-        if (currentUser.status === 'pending') {
-          showToast('Your account is pending admin approval. Some features may be restricted.', 'fa-clock');
-        }
+        updateTopActions();
         showDashboard();
+        if (currentUser.status === 'pending') showToast('Your account is pending admin approval.', 'fa-clock');
       } else {
         currentUser = null;
-        showLogin();
+        updateTopActions();
+        dashboardApp.classList.add('hidden');
       }
     });
   }
@@ -2637,17 +2545,17 @@
   function getLabelQrSize(lbl) { return (lbl && lbl.qrSize) ? lbl.qrSize : getGlobalQrSize(); }
   function getLabelBarWidth(lbl) { return (lbl && lbl.barcodeBarWidth !== undefined) ? lbl.barcodeBarWidth : getGlobalBarcodeBar(); }
 
-  // ==================== LOCAL USER MANAGEMENT (Settings tab) ====================
+  // ==================== LOCAL USER MANAGEMENT UI ====================
   const userListContainer = $('userListContainer');
   function renderUserList() {
     if (!currentUser) return;
     const users = getLocalUsers();
     if (currentUser.role !== 'admin') {
-      userListContainer.innerHTML = '<div style="font-size:0.75rem;color:#64748b;padding:8px;">Only administrators can manage local users. Cloud users are managed in the Customers tab.</div>';
+      userListContainer.innerHTML = '<div style="font-size:0.73rem;color:#64748b;padding:8px;">Only administrators can manage local users. Cloud accounts appear in the Customers tab.</div>';
       return;
     }
     if (!users.length) {
-      userListContainer.innerHTML = '<div style="font-size:0.75rem;color:#64748b;padding:8px;">No local users. Cloud accounts appear in the Customers tab.</div>';
+      userListContainer.innerHTML = '<div style="font-size:0.73rem;color:#64748b;padding:8px;">No local users. Cloud accounts appear in the Customers tab.</div>';
       return;
     }
     userListContainer.innerHTML = users.map(u => `
@@ -2748,9 +2656,9 @@
 
       <div class="customer-summary">
         <div class="summary-card"><div class="sc-icon"><i class="fas fa-user"></i></div><div class="sc-value">${escapeHtml(u.name || '—')}</div><div class="sc-label">Account</div></div>
-        <div class="summary-card"><div class="sc-icon"><i class="fas fa-envelope"></i></div><div class="sc-value" style="font-size:0.75rem;word-break:break-all;">${escapeHtml(u.email || '—')}</div><div class="sc-label">Email</div></div>
-        <div class="summary-card"><div class="sc-icon"><i class="fas fa-calendar"></i></div><div class="sc-value" style="font-size:0.85rem;">${created}</div><div class="sc-label">Member since</div></div>
-        <div class="summary-card"><div class="sc-icon"><i class="fas fa-crown"></i></div><div class="sc-value" style="font-size:0.9rem;">${state.label}</div><div class="sc-label">Plan</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-envelope"></i></div><div class="sc-value" style="font-size:0.72rem;word-break:break-all;">${escapeHtml(u.email || '—')}</div><div class="sc-label">Email</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-calendar"></i></div><div class="sc-value" style="font-size:0.82rem;">${created}</div><div class="sc-label">Member since</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-crown"></i></div><div class="sc-value" style="font-size:0.88rem;">${state.label}</div><div class="sc-label">Plan</div></div>
       </div>
 
       <div class="customer-detail-card">
@@ -2767,7 +2675,7 @@
         <li><i class="fas fa-check-circle"></i> Bulk import from CSV, Excel & JSON</li>
         <li><i class="fas fa-check-circle"></i> Custom label designer with drag-and-drop placement</li>
         <li><i class="fas fa-check-circle"></i> PDF, JPG and vector export (.EPS / .AI)</li>
-        <li><i class="fas fa-check-circle"></i> Cloud sync across devices (Firebase)</li>
+        <li><i class="fas fa-check-circle"></i> Cloud sync across devices</li>
         <li><i class="fas fa-check-circle"></i> Priority WhatsApp support</li>
       </ul>
 
@@ -2784,13 +2692,12 @@
           </div>
         `).join('')}
       </div>
-      <div style="margin-top:12px; font-size:0.72rem; color:#64748b; text-align:center; line-height:1.5;">
+      <div style="margin-top:12px; font-size:0.7rem; color:#64748b; text-align:center; line-height:1.5;">
         All prices in PKR. Contact us on WhatsApp to activate your plan.<br>
         <a href="https://wa.me/${CONTACT_PHONE}?text=Subscription%20enquiry" target="_blank" style="color:#25d366;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> ${CONTACT_PHONE}</a>
       </div>
     `;
 
-    // Pricing button handlers
     host.querySelectorAll('.pc-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const plan = btn.dataset.plan;
@@ -2801,7 +2708,6 @@
     });
   }
 
-  // Expose scroll helper for banner button
   window.scrollToPricing = function () {
     const el = document.querySelector('#pricingCards');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2816,7 +2722,7 @@
       return;
     }
     if (!firebaseReady) {
-      host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Firebase not connected. Customer management requires cloud mode.</div>';
+      host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Cloud mode not available. Customer management requires an internet connection.</div>';
       return;
     }
 
@@ -2839,7 +2745,7 @@
                   const state = computeSubscriptionState(u);
                   return `<tr data-uid="${escapeHtml(u.uid)}">
                     <td style="font-weight:700;">${escapeHtml(u.name || '—')}</td>
-                    <td style="font-size:0.7rem;word-break:break-all;">${escapeHtml(u.email || '—')}</td>
+                    <td style="font-size:0.68rem;word-break:break-all;">${escapeHtml(u.email || '—')}</td>
                     <td><span class="status-dot ${state.cls}"></span>${escapeHtml(state.label)}</td>
                     <td>${escapeHtml(u.subscription || 'trial')}</td>
                     <td>${u.trialEnd ? new Date(u.trialEnd).toLocaleDateString() : '—'}</td>
@@ -2856,7 +2762,7 @@
               </tbody>
             </table>
           </div>
-          <div style="margin-top:12px; font-size:0.72rem; color:#64748b; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div style="margin-top:12px; font-size:0.7rem; color:#64748b; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <span><i class="fas fa-info-circle"></i> Approve new signups, extend subscriptions by 30 days, or expire accounts.</span>
             <button class="btn btn-outline btn-sm" id="refreshCustomersBtn" style="width:auto;padding:6px 12px;"><i class="fas fa-sync"></i> Refresh</button>
           </div>
@@ -2874,12 +2780,10 @@
               const ref = fbDb.collection('users').doc(uid);
               const now = Date.now();
               if (act === 'approve') {
-                // Activate + start subscription 30 days (or keep trial if no sub set)
                 const snap = await ref.get();
                 const data = snap.data() || {};
                 const patch = { status: 'active', updatedAt: now };
                 if (!data.subscription || data.subscription === 'trial') {
-                  // keep trial if still valid, otherwise give 30 days starter
                   if (data.trialEnd && now < data.trialEnd) { /* trial still valid */ }
                   else { patch.subscription = 'starter'; patch.subscriptionStart = now; patch.subscriptionEnd = now + 30 * 24 * 60 * 60 * 1000; }
                 }
@@ -3255,7 +3159,6 @@
     e.preventDefault();
     if (currentUser && !isSubscriptionActive(currentUser) && currentUser.status !== 'pending') {
       showToast('Subscription required. Please choose a plan.', 'fa-crown');
-      // Switch to customer tab
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.querySelector('.tab-btn[data-tab="tabCustomer"]').classList.add('active');
@@ -3396,13 +3299,13 @@
       const head = 'background:#f1f5f9;padding:4px 6px;font-weight:700;border-bottom:1px solid #e2e8f0;';
       const site = lbl.website ? `<span style="color:#0d47a1;">${escapeHtml(lbl.website)}</span>` : '<span style="color:#cbd5e1;">—</span>';
       inner.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;font-size:0.68rem;line-height:1.3;text-align:left;font-weight:500;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;font-size:0.66rem;line-height:1.3;text-align:left;font-weight:500;">
           <div style="${head}">Barcode</div><div style="${head}">Product</div>
           <div style="${cell}font-family:monospace;">${escapeHtml(lbl.sku)}</div><div style="${cell}">${escapeHtml(lbl.product)}</div>
           <div style="${head}">Price</div><div style="${head}">Size</div>
           <div style="${cell}">${escapeHtml(lbl.price)}</div><div style="${cell}">${escapeHtml(lbl.size)}</div>
           <div style="${head}">Description</div><div style="${head}">Website</div>
-          <div style="${cell}">${escapeHtml(lbl.details)}</div><div style="${cell}font-size:0.6rem;word-break:break-all;">${site}</div>
+          <div style="${cell}">${escapeHtml(lbl.details)}</div><div style="${cell}font-size:0.58rem;word-break:break-all;">${site}</div>
           <div style="${head}">Barcode</div><div style="${head}">QR Code</div>
           <div style="padding:4px;text-align:center;" data-role="tbc"></div><div style="padding:4px;text-align:center;" data-role="tqr"></div>
         </div>`;
@@ -4918,27 +4821,23 @@
     renderImagePreview();
     updateSelectionUI();
     renderCustomerPanel();
+    updateTopActions();
 
-    // Firebase auth listener
+    // Auth listener
     initAuthListener();
 
-    // If firebase isn't ready, fall back to local session
+    // If cloud isn't ready, fall back to local session
     if (!firebaseReady) {
-      setFirebaseStatus(false);
       const s = sessionStorage.getItem(SESSION_KEY);
       if (s) {
         const local = getLocalUsers().find(u => (u.username || u.email) === s);
         if (local) {
           currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
+          updateTopActions();
           showDashboard();
           return;
         }
       }
-      showLogin();
-      setTimeout(() => loginEmail.focus(), 300);
-    } else {
-      setFirebaseStatus(true);
-      // auth listener will handle routing
     }
   })();
 </script>
