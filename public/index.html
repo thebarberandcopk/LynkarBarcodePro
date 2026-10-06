@@ -1179,7 +1179,23 @@
     @media(max-width:1100px){.dashboard .sidebar{width:270px;flex-basis:270px}.dashboard .workspace{padding-left:20px;padding-right:20px}.dashboard .top-bar{padding-left:20px;padding-right:20px}}
     @media(max-width:760px){.dashboard{flex-direction:column;height:100vh}.dashboard .sidebar{width:100%;flex:0 0 auto;height:auto;max-height:46vh;border-right:0;border-bottom:1px solid #e1e7ee}.dashboard .sidebar-scroll{padding:12px 12px 10px}.dashboard .sidebar-header{margin-bottom:10px;padding-bottom:10px}.dashboard .tab-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.dashboard .tab-btn{justify-content:center;padding:9px 4px;font-size:.62rem}.dashboard .tab-btn i{width:auto}.dashboard .tab-btn span{display:block}.dashboard .tab-content-note{font-size:.6rem!important;padding:8px!important}.dashboard .sidebar-footer{display:none}.dashboard .main-content{height:54vh;min-height:0}.dashboard .top-bar{padding:10px 14px;min-height:62px}.dashboard .top-actions{width:100%;justify-content:flex-start}.dashboard .workspace{padding:14px 14px 70px}.dashboard .label-grid{grid-template-columns:1fr}.dashboard .top-actions .btn{padding:8px 10px!important}}
     @media(max-width:480px){.dashboard .tab-btn span{display:none}.dashboard .tab-btn i{font-size:.9rem}.dashboard .top-bar h2{font-size:.9rem}.dashboard .top-actions .btn{font-size:.62rem}}
-</style>
+    /* ===== V5: professional scrollable code menu ===== */
+    #codesDropdown {
+      max-height: min(72vh, 680px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+    #codesDropdown::-webkit-scrollbar { width: 8px; }
+    #codesDropdown::-webkit-scrollbar-track { background: transparent; }
+    #codesDropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+    #codesDropdown::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .cloud-sync-badge { display:inline-flex; align-items:center; gap:6px; font-size:.68rem; font-weight:700; padding:5px 9px; border-radius:999px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+    .cloud-sync-badge.syncing { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+    .cloud-sync-badge.offline { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+    .cloud-sync-badge i { font-size:.65rem; }
+  </style>
 </head>
 <body>
 
@@ -1832,7 +1848,7 @@
     <div class="top-bar">
       <h2>
         <i class="fas fa-layer-group" style="color: var(--secondary); margin-right: 8px;"></i>
-        Label Workspace <span class="badge" id="countDisplay">0</span>
+        Label Workspace <span class="badge" id="countDisplay">0</span> <span class="cloud-sync-badge" id="cloudSyncStatus"><i class="fas fa-cloud"></i> Cloud Sync</span>
       </h2>
       <div class="top-actions">
         <button class="btn btn-outline" id="selectAllBtn" style="width: auto; padding: 10px 16px;"><i class="fas fa-check-square"></i> Select All</button>
@@ -1876,6 +1892,11 @@
             </div>
             <button class="dd-item" data-code="both" data-type="pdf"><i class="fas fa-file-pdf" style="color:#c62828;"></i> Barcode + QR as PDF</button>
             <button class="dd-item" data-code="both" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> Barcode + QR as JPG (ZIP)</button>
+
+            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#166534; background:#ecfdf5; border-bottom:1px solid #bbf7d0; border-top:1px solid #e2e8f0;">Vector PDF</div>
+            <button class="dd-item" data-code="barcode" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> All Barcodes as Vector PDF</button>
+            <button class="dd-item" data-code="qrcode" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> All QR Codes as Vector PDF</button>
+            <button class="dd-item" data-code="both" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> Barcode + QR as Vector PDF</button>
 
             <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#e65100; background:#fff3e0; border-bottom:1px solid #ffe0b2; border-top:1px solid #e2e8f0;">Vector Formats (Adobe Illustrator)</div>
             <div class="qr-scan-row-vector">
@@ -2232,6 +2253,7 @@
   const SESSION_KEY = 'lynkkar_logged_in_user';
   const PLACEMENT_KEY = 'lynkkar_placement_order_v2';
   const LABELS_KEY = 'lynkkar_labels_v2';
+  function labelsStorageKey(uid = currentUser?.uid) { return uid ? `${LABELS_KEY}_${uid}` : LABELS_KEY; }
   const SETTINGS_KEY = 'lynkkar_settings_v2';
   const CONTACT_PHONE = '923216175757';
   const TEXT_KEYS = ['brand', 'product', 'details', 'price', 'size'];
@@ -2574,6 +2596,7 @@
       return;
     }
     ensureLockOverlay().classList.remove('show');
+    closeLogin();
     loginScreen.classList.add('hidden');
     dashboardApp.classList.remove('hidden');
     startSubscriptionTicker();
@@ -2656,8 +2679,9 @@
         showDashboard();
         showToast('Welcome back, ' + (currentUser.name || 'Admin') + '!', 'fa-user-check');
       } else {
-        // Firebase auth state listener will call showDashboard
+        // Firebase auth state listener will verify the account and open the dashboard.
         loginError.classList.remove('show');
+        closeLogin();
       }
     } else {
       loginErrorMsg.innerText = 'Login failed: ' + (res.error || 'Unknown error');
@@ -2762,7 +2786,7 @@
     setFirebaseStatus(true);
     fbAuth.onAuthStateChanged(async (user) => {
       if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
-      if (!user) { currentUser = null; showLogin(); return; }
+      if (!user) { currentUser = null; stopSharedLabelsSync(); showLogin(); return; }
       try {
         const doc = await ensureUserDoc(user.uid, { email: user.email, name: user.displayName || user.email });
         if (!doc) { await denyAndSignOut('Account unavailable', 'Your account profile could not be loaded.'); return; }
@@ -2775,6 +2799,9 @@
           else $('adminTabBtn').style.display = 'none';
           const state = computeSubscriptionState(currentUser);
           if (currentUser.role === 'admin' || state.canUse) {
+            loadLocalLabelsForCurrentUser();
+            startSharedLabelsSync();
+            closeLogin();
             if (dashboardApp.classList.contains('hidden')) showDashboard();
           } else if (currentUser.status === 'pending') {
             await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
@@ -2783,7 +2810,12 @@
           }
         });
         const state = computeSubscriptionState(currentUser);
-        if (currentUser.role === 'admin' || state.canUse) showDashboard();
+        if (currentUser.role === 'admin' || state.canUse) {
+          loadLocalLabelsForCurrentUser();
+          startSharedLabelsSync();
+          closeLogin();
+          showDashboard();
+        }
         else if (currentUser.status === 'pending') await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
         else await denyAndSignOut(state.label, state.text);
       } catch (err) {
@@ -2811,6 +2843,11 @@
   // ==================== STATE ====================
   let labelsList = [];
   let uploadedData = [];
+  let userLabelsUnsub = null;
+  let userSyncTimer = null;
+  let userSyncApplying = false;
+  let userSyncBusy = false;
+  let userOwnedIds = new Set();
   let uploadedFileName = '';
   let currentSequential = 1001;
   let selectedIds = new Set();
@@ -2818,7 +2855,156 @@
   const loadingOverlay = $('loadingOverlay'), loadingMsg = $('loadingMsg'), progressBar = $('progressBar');
   const selectToolbar = $('selectToolbar');
 
-  function persistLabels() { lsSet(LABELS_KEY, labelsList); }
+  function setCloudSyncStatus(mode, text) {
+    const el = $('cloudSyncStatus');
+    if (!el) return;
+    el.className = 'cloud-sync-badge' + (mode === 'syncing' ? ' syncing' : mode === 'offline' ? ' offline' : '');
+    el.innerHTML = mode === 'syncing'
+      ? '<i class="fas fa-sync-alt fa-spin"></i> Syncing…'
+      : mode === 'offline'
+        ? '<i class="fas fa-cloud-slash"></i> Offline'
+        : '<i class="fas fa-cloud"></i> ' + escapeHtml(text || 'Cloud Sync');
+  }
+
+  function normalizeLabelForUser(label) {
+    const ownerUid = currentUser?.uid || label.ownerUid || '';
+    const ownerEmail = currentUser?.email || label.ownerEmail || '';
+    return { ...label, ownerUid, ownerEmail, updatedAt: Number(label.updatedAt || Date.now()) };
+  }
+
+  function loadLocalLabelsForCurrentUser() {
+    const uid = currentUser?.uid;
+    if (!uid) { labelsList = []; return; }
+    const key = labelsStorageKey(uid);
+    const saved = lsGet(key, []);
+    labelsList = Array.isArray(saved) ? saved : [];
+    labelsList = labelsList.map((l, i) => ({
+      ...l,
+      id: l.id || ('lbl_' + Date.now() + '_' + i),
+      ownerUid: l.ownerUid || uid,
+      ownerEmail: l.ownerEmail || currentUser.email || '',
+      updatedAt: Number(l.updatedAt || Date.now())
+    }));
+    lsSet(key, labelsList);
+    selectedIds.clear();
+  }
+
+  async function syncLabelsToCloud() {
+    if (userSyncApplying || !firebaseReady || !currentUser || (currentUser.status !== 'active' && currentUser.role !== 'admin')) return;
+    if (userSyncBusy) return;
+    userSyncBusy = true;
+    setCloudSyncStatus('syncing');
+    try {
+      const uid = currentUser.uid;
+      const collectionRef = fbDb.collection('users').doc(uid).collection('labels');
+      const writes = [];
+      const currentOwned = new Set();
+
+      labelsList.forEach((raw) => {
+        const l = normalizeLabelForUser(raw);
+        if (l.ownerUid !== uid) return;
+        raw.ownerUid = uid;
+        raw.ownerEmail = l.ownerEmail;
+        raw.updatedAt = l.updatedAt;
+        currentOwned.add(String(l.id));
+        writes.push({ type: 'set', ref: collectionRef.doc(String(l.id)), data: l });
+      });
+
+      userOwnedIds.forEach(id => {
+        if (!currentOwned.has(String(id))) {
+          writes.push({ type: 'delete', ref: collectionRef.doc(String(id)) });
+        }
+      });
+
+      for (let start = 0; start < writes.length; start += 450) {
+        const batch = fbDb.batch();
+        writes.slice(start, start + 450).forEach(w => w.type === 'delete'
+          ? batch.delete(w.ref)
+          : batch.set(w.ref, w.data, { merge: true }));
+        await batch.commit();
+      }
+      userOwnedIds = currentOwned;
+      lsSet(labelsStorageKey(uid), labelsList);
+      setCloudSyncStatus('ok', 'Private Cloud Sync');
+    } catch (e) {
+      console.error('User label sync failed:', e);
+      setCloudSyncStatus('offline', 'Sync error');
+    } finally {
+      userSyncBusy = false;
+    }
+  }
+
+  function scheduleCloudSync() {
+    if (userSyncApplying) return;
+    clearTimeout(userSyncTimer);
+    userSyncTimer = setTimeout(() => syncLabelsToCloud(), 500);
+  }
+
+  function persistLabels() {
+    const uid = currentUser?.uid;
+    if (!uid) return;
+    lsSet(labelsStorageKey(uid), labelsList);
+    if (firebaseReady && currentUser && !userSyncApplying) scheduleCloudSync();
+  }
+
+  function mergeUserLabels(snapshot) {
+    if (!snapshot || !currentUser) return;
+    const incoming = [];
+    snapshot.forEach(doc => {
+      const data = doc.data() || {};
+      // Defense in depth: never merge another account's label.
+      if (data.ownerUid === currentUser.uid) incoming.push({ id: doc.id, ...data });
+    });
+
+    userOwnedIds = new Set(incoming.map(x => String(x.id)));
+    const localById = new Map(labelsList
+      .filter(l => !l.ownerUid || l.ownerUid === currentUser.uid)
+      .map(l => [String(l.id), normalizeLabelForUser(l)]));
+
+    incoming.forEach(remote => {
+      const local = localById.get(String(remote.id));
+      if (!local || Number(remote.updatedAt || 0) >= Number(local.updatedAt || 0)) {
+        localById.set(String(remote.id), remote);
+      }
+    });
+
+    userSyncApplying = true;
+    labelsList = Array.from(localById.values()).filter(l => l.ownerUid === currentUser.uid);
+    lsSet(labelsStorageKey(currentUser.uid), labelsList);
+    userSyncApplying = false;
+    renderGrid();
+    updateSelectionUI();
+    setCloudSyncStatus('ok', 'Private Cloud Sync');
+  }
+
+  function startSharedLabelsSync() {
+    // Kept under the old function name for compatibility with existing callers.
+    if (userLabelsUnsub) { userLabelsUnsub(); userLabelsUnsub = null; }
+    clearTimeout(userSyncTimer);
+    userOwnedIds = new Set();
+
+    if (!firebaseReady || !currentUser || (currentUser.status !== 'active' && currentUser.role !== 'admin')) {
+      setCloudSyncStatus('offline', 'Private Cloud Sync');
+      return;
+    }
+
+    loadLocalLabelsForCurrentUser();
+    setCloudSyncStatus('syncing');
+    const labelsRef = fbDb.collection('users').doc(currentUser.uid).collection('labels');
+    userLabelsUnsub = labelsRef.orderBy('updatedAt', 'desc').limit(1000).onSnapshot(
+      snap => { mergeUserLabels(snap); scheduleCloudSync(); },
+      err => { console.error('User labels listener:', err); setCloudSyncStatus('offline', 'Sync unavailable'); }
+    );
+    scheduleCloudSync();
+  }
+
+  function stopSharedLabelsSync() {
+    // Kept under the old function name for compatibility with existing callers.
+    if (userLabelsUnsub) { userLabelsUnsub(); userLabelsUnsub = null; }
+    clearTimeout(userSyncTimer);
+    userOwnedIds = new Set();
+    setCloudSyncStatus('offline', 'Private Cloud Sync');
+  }
 
   // ==================== SETTINGS PERSISTENCE ====================
   const PERSIST_IDS = ['brandName', 'productName', 'priceValue', 'sizeValue', 'productDetails', 'productWebsite', 'codeValue', 'codeFormat',
@@ -3585,6 +3771,8 @@
 
     const invalid = newLabels.filter(l => !isValidCode(l.format, l.sku)).length;
     if (!(await reserveLabelQuota(newLabels.length))) return;
+    const nowStamp = Date.now();
+    newLabels.forEach(l => { l.ownerUid = currentUser?.uid || ''; l.ownerEmail = currentUser?.email || ''; l.updatedAt = nowStamp; });
     labelsList.push(...newLabels);
     persistLabels(); renderGrid(); applyStickerSize();
     showToast(invalid ? `${labelsList.length} label(s) — ${invalid} have a code invalid for ${base.format}` : `${labelsList.length} label(s) in list`, invalid ? 'fa-exclamation-triangle' : 'fa-check-circle');
@@ -3891,7 +4079,7 @@
       persistLabels(); renderGrid(); showToast('Label removed', 'fa-trash-alt');
     }
     else if (btn.dataset.act === 'dup') {
-      const copy = { ...labelsList[idx], id: 'lbl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) };
+      const copy = { ...labelsList[idx], id: 'lbl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), ownerUid: currentUser?.uid || labelsList[idx].ownerUid || '', ownerEmail: currentUser?.email || labelsList[idx].ownerEmail || '', updatedAt: Date.now() };
       labelsList.splice(idx + 1, 0, copy); persistLabels(); renderGrid(); showToast('Label duplicated', 'fa-copy');
     }
     else if (btn.dataset.act === 'edit') {
@@ -3910,7 +4098,7 @@
   $('duplicateSelectedBtn').addEventListener('click', () => {
     const sel = getSelectedLabels();
     if (!sel.length) return showToast('No labels selected', 'fa-info-circle');
-    const copies = sel.map(l => ({ ...l, id: 'lbl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) }));
+    const copies = sel.map(l => ({ ...l, id: 'lbl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), ownerUid: currentUser?.uid || l.ownerUid || '', ownerEmail: currentUser?.email || l.ownerEmail || '', updatedAt: Date.now() }));
     labelsList.push(...copies);
     persistLabels(); renderGrid();
     showToast(`Duplicated ${copies.length} label(s)`, 'fa-copy');
@@ -4063,6 +4251,9 @@
     }
 
     Object.assign(lbl, collectEditForm());
+    lbl.ownerUid = currentUser?.uid || lbl.ownerUid || '';
+    lbl.ownerEmail = currentUser?.email || lbl.ownerEmail || '';
+    lbl.updatedAt = Date.now();
 
     persistLabels();
     renderGrid();
@@ -4898,6 +5089,57 @@
     return pdf;
   }
 
+  function buildCodeVectorSVG(lbl, codeType, qrScanAction) {
+    const bh = getLabelBarcodeHeight(lbl);
+    const qs = getLabelQrSize(lbl);
+    const bwid = getLabelBarWidth(lbl);
+    const action = qrScanAction || lbl.qrType || 'fullPrice';
+    const payload = buildScanPayloadForAction(lbl, action);
+    const barcodeValue = lbl.sku || ' ';
+    const barcodeFormat = lbl.format === 'qr' ? 'CODE128' : (lbl.format || 'CODE128');
+    const productName = (lbl.product || lbl.brand || lbl.sku || 'Product').toString();
+    const sizeText = (lbl.size || '').toString().trim();
+    const headerText = productName + (sizeText ? '  •  ' : '') + sizeText;
+    const pad = 10, headerHeight = 28, skuHeight = 20;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const makeRoot = (w,h) => { const x=document.createElementNS(svgNS,'svg'); x.setAttribute('width',w); x.setAttribute('height',h); x.setAttribute('viewBox',`0 0 ${w} ${h}`); x.setAttribute('xmlns',svgNS); return x; };
+    const addBg = (svg,w,h) => { const r=document.createElementNS(svgNS,'rect'); r.setAttribute('x',0); r.setAttribute('y',0); r.setAttribute('width',w); r.setAttribute('height',h); r.setAttribute('fill','#ffffff'); svg.appendChild(r); };
+    const addText = (svg,text,x,y,size,anchor='middle',family='Arial, Helvetica, sans-serif') => { const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('text-anchor',anchor); t.setAttribute('font-family',family); t.setAttribute('font-size',size); t.setAttribute('font-weight','bold'); t.setAttribute('fill','#000000'); t.textContent=text; svg.appendChild(t); };
+    const appendInner = (svg, child, tx, ty) => { const g=document.createElementNS(svgNS,'g'); g.setAttribute('transform',`translate(${tx}, ${ty})`); g.innerHTML=child.innerHTML; svg.appendChild(g); };
+    if (codeType === 'barcode') {
+      const bc=buildBarcodeSVG(lbl,barcodeValue,barcodeFormat,bh,bwid), w=parseFloat(bc.getAttribute('width'))||200, h=parseFloat(bc.getAttribute('height'))||60;
+      const W=w+pad*2,H=headerHeight+h+skuHeight+pad*2,svg=makeRoot(W,H); addBg(svg,W,H); addText(svg,headerText,W/2,pad+16,14); appendInner(svg,bc,pad,headerHeight+pad); addText(svg,barcodeValue,W/2,H-pad,10,'middle','Courier New, monospace'); return {svg,width:W,height:H};
+    }
+    if (codeType === 'qrcode') {
+      const qr=buildQRSVG(payload,qs), w=parseFloat(qr.getAttribute('width'))||100, h=parseFloat(qr.getAttribute('height'))||100;
+      const W=w+pad*2,H=headerHeight+h+skuHeight+pad*2,svg=makeRoot(W,H); addBg(svg,W,H); addText(svg,headerText,W/2,pad+16,14); appendInner(svg,qr,pad,headerHeight+pad); addText(svg,barcodeValue,W/2,H-pad,10,'middle','Courier New, monospace'); return {svg,width:W,height:H};
+    }
+    const bc=buildBarcodeSVG(lbl,barcodeValue,barcodeFormat,bh,bwid), qr=buildQRSVG(payload,qs);
+    const bcW=parseFloat(bc.getAttribute('width'))||200, bcH=parseFloat(bc.getAttribute('height'))||60, qrW=parseFloat(qr.getAttribute('width'))||100, qrH=parseFloat(qr.getAttribute('height'))||100, gap=20;
+    const W=bcW+gap+qrW+pad*2,H=headerHeight+Math.max(bcH,qrH)+skuHeight+pad*2,svg=makeRoot(W,H); addBg(svg,W,H); addText(svg,headerText,W/2,pad+16,14); appendInner(svg,bc,pad,headerHeight+pad); appendInner(svg,qr,pad+bcW+gap,headerHeight+pad); addText(svg,barcodeValue,W/2,H-pad,10,'middle','Courier New, monospace'); return {svg,width:W,height:H};
+  }
+
+  async function downloadAllCodesVectorPdf(codeType) {
+    if (!exportAllowed('pdf')) return showToast('Vector PDF export is not included in your plan.','fa-lock');
+    if (!labelsList.length) return showToast('Generate labels first', 'fa-exclamation-circle');
+    if (typeof window.jspdf === 'undefined') return showToast('PDF library not loaded', 'fa-exclamation-triangle');
+    const qrScanAction=getQrScanActionForVector();
+    loadingMsg.innerText='Building vector PDF...'; progressBar.style.width='0'; loadingOverlay.style.display='flex'; await sleep(30);
+    try {
+      const {jsPDF}=window.jspdf; let pdf=null; const n=labelsList.length;
+      for(let i=0;i<n;i++){
+        const lbl=labelsList[i]; loadingMsg.innerText=`Building vector PDF ${i+1} of ${n}...`; progressBar.style.width=Math.round(((i+1)/n)*100)+'%';
+        const out=buildCodeVectorSVG(lbl,codeType,qrScanAction); const wPt=out.width*72/96,hPt=out.height*72/96;
+        if(!pdf) pdf=new jsPDF({unit:'pt',format:[wPt,hPt],compress:true}); else pdf.addPage([wPt,hPt]);
+        const pageH=hPt, scale=72/96;
+        out.svg.querySelectorAll('rect').forEach(r=>{ const x=(parseFloat(r.getAttribute('x'))||0)*scale,y=(parseFloat(r.getAttribute('y'))||0)*scale,w=(parseFloat(r.getAttribute('width'))||0)*scale,h=(parseFloat(r.getAttribute('height'))||0)*scale; const fill=(r.getAttribute('fill')||'#000').toLowerCase(); if(fill==='none') return; const rgb=fill==='#fff'||fill==='#ffffff'?'255 255 255':'0 0 0'; if(rgb==='255 255 255') pdf.setFillColor(255,255,255); else pdf.setFillColor(0,0,0); pdf.rect(x,pageH-y-h,w,h,'F'); });
+        out.svg.querySelectorAll('text').forEach(t=>{ const text=t.textContent||''; if(!text.trim()) return; const x=(parseFloat(t.getAttribute('x'))||0)*scale; const y=(parseFloat(t.getAttribute('y'))||0)*scale; const fs=(parseFloat(t.getAttribute('font-size'))||10)*scale; const anchor=t.getAttribute('text-anchor')||'start'; pdf.setFont('helvetica','bold'); pdf.setFontSize(fs); let tx=x; if(anchor==='middle') tx=x-pdf.getTextWidth(text)/2; else if(anchor==='end') tx=x-pdf.getTextWidth(text); pdf.text(text,tx,pageH-y); });
+        await sleep(0);
+      }
+      const label=codeType==='barcode'?'Barcodes':codeType==='qrcode'?'QRCodes':'Barcodes_QR'; pdf.save(`LynkKar_${label}_VECTOR_${Date.now()}.pdf`); showToast(`Vector PDF saved — ${n} ${label.toLowerCase()}`,'fa-file-pdf');
+    }catch(err){ console.error(err); showToast('Error creating vector PDF: '+err.message,'fa-exclamation-triangle'); } finally { loadingOverlay.style.display='none'; }
+  }
+
   async function downloadAllCodesVector(codeType, format) {
     if (!exportAllowed(format)) return showToast(`.${format.toUpperCase()} export is not included in your plan.`,'fa-lock');
     if (!labelsList.length) return showToast('Generate labels first', 'fa-exclamation-circle');
@@ -5145,6 +5387,7 @@
       const fileType = item.dataset.type;
 
       if (fileType === 'pdf') await downloadAllCodesPdf(codeType);
+      else if (fileType === 'pdf-vector') await downloadAllCodesVectorPdf(codeType);
       else if (fileType === 'jpg') await downloadAllCodesJpgZip(codeType);
       else if (fileType === 'ai') await downloadAllCodesVector(codeType, 'ai');
       else if (fileType === 'eps') await downloadAllCodesVector(codeType, 'eps');
@@ -5185,9 +5428,8 @@
     restoreSettings();
     await loadSubscriptionConfig();
     applyTextSizes();
-    labelsList = lsGet(LABELS_KEY, []);
-    if (!Array.isArray(labelsList)) labelsList = [];
-    labelsList.forEach((l, i) => { if (!l.id) l.id = 'init_' + i + '_' + Math.random().toString(36).slice(2, 7); });
+    // Labels are account-scoped. Do not load a global/shared label list before authentication.
+    labelsList = [];
     renderImagePreview();
     updateSelectionUI();
     renderCustomerPanel();
