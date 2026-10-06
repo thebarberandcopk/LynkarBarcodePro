@@ -45,7 +45,8 @@ service cloud.firestore {
           && request.resource.data.role == resource.data.role
           && request.resource.data.status == 'active'
           && request.resource.data.subscription == 'trial'
-          && request.resource.data.trialStart <= request.time.toMillis()
+          // Client clocks can differ slightly from Firebase server time, so do not
+          // require the client-generated millisecond value to be <= request.time.
           && request.resource.data.trialStart >= resource.data.createdAt
           && request.resource.data.trialEnd == request.resource.data.trialStart + 259200000
           && request.resource.data.subscriptionStart == resource.data.subscriptionStart
