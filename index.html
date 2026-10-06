@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LynkKar Pro Label Studio</title>
 
+  <!-- Firebase SDK (compat for easier integration) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- Existing libraries -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -13,6 +19,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -46,7 +55,7 @@
     .login-screen.hidden { display: none; }
     .login-card {
       background: #fff; border-radius: 16px; padding: 40px 36px 32px;
-      width: 100%; max-width: 400px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+      width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);
       animation: loginIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
       position: relative; overflow: hidden;
     }
@@ -55,7 +64,7 @@
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
       background: linear-gradient(90deg, var(--secondary), #ffb648, var(--secondary));
     }
-    .login-brand { text-align: center; margin-bottom: 26px; }
+    .login-brand { text-align: center; margin-bottom: 20px; }
     .login-brand .logo-circle {
       width: 64px; height: 64px; margin: 0 auto 12px;
       background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
@@ -105,9 +114,65 @@
     }
     .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(30,43,60,0.35); }
     .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .login-btn.secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
+    .login-btn.secondary:hover { background: #f8fafc; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
     .login-footer { text-align: center; margin-top: 22px; padding-top: 16px; border-top: 1px dashed #e2e8f0; font-size: 0.68rem; color: #94a3b8; line-height: 1.5; }
     .login-footer .login-whatsapp { display: inline-flex; align-items: center; gap: 5px; color: #25d366; font-weight: 700; text-decoration: none; margin-top: 4px; font-size: 0.72rem; }
     .login-footer .login-whatsapp:hover { text-decoration: underline; }
+
+    /* ============ SIGNUP / AUTH MODAL ============ */
+    .auth-modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 26, 40, 0.65);
+      backdrop-filter: blur(4px); display: none; align-items: center;
+      justify-content: center; z-index: 10005; padding: 20px;
+    }
+    .auth-modal-overlay.show { display: flex; }
+    .auth-modal {
+      background: #fff; border-radius: 16px; width: 100%; max-width: 460px;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+      animation: loginIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      position: relative; padding: 34px 32px 28px;
+    }
+    .auth-modal::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+      background: linear-gradient(90deg, var(--secondary), #ffb648, var(--secondary));
+      border-radius: 16px 16px 0 0;
+    }
+    .auth-modal h2 { margin: 0 0 6px; font-size: 1.2rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .auth-modal .auth-sub { font-size: 0.78rem; color: #6b7a8d; margin-bottom: 20px; }
+    .auth-modal .form-group { margin-bottom: 14px; }
+    .auth-modal .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4a5a6e; margin-bottom: 5px; }
+    .auth-modal .form-group input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.9rem; background: #f9fbfd; transition: var(--transition); font-family: inherit; }
+    .auth-modal .form-group input:focus { outline: none; border-color: var(--secondary); background: #fff; box-shadow: 0 0 0 4px rgba(242,133,0,0.1); }
+    .auth-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .auth-actions .btn { flex: 1; }
+    .auth-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: var(--transition); }
+    .auth-close:hover { background: #fee2e2; color: var(--danger); }
+    .auth-msg { font-size: 0.78rem; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
+    .auth-msg.show { display: block; }
+    .auth-msg.error { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+    .auth-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+
+    /* ============ ANIMATED DASHBOARD PREVIEW (login screen) ============ */
+    .login-features {
+      max-width: 880px; width: 100%; margin: 22px auto 0; display: grid;
+      grid-template-columns: repeat(3, 1fr); gap: 12px;
+      animation: fadeSlideUp 0.6s 0.15s both;
+    }
+    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .feature-card {
+      background: rgba(255,255,255,0.09); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
+      padding: 18px 16px; color: #fff; text-align: center;
+      transition: transform 0.25s ease, background 0.25s;
+    }
+    .feature-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.15); }
+    .feature-card i { font-size: 1.7rem; color: var(--secondary); margin-bottom: 10px; display: block; }
+    .feature-card h4 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 700; }
+    .feature-card p { margin: 0; font-size: 0.72rem; color: rgba(255,255,255,0.75); line-height: 1.45; }
+    .login-left { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 880px; }
+    .login-left .login-card { margin: 0 auto; }
+    .login-screen-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 
     /* ============ DASHBOARD ============ */
     .dashboard { display: flex; height: 100vh; overflow: hidden; }
@@ -129,6 +194,14 @@
     }
     .sidebar-header .sh-left { display: flex; align-items: center; gap: 10px; }
     .sidebar-header i.main-icon { color: var(--secondary); font-size: 1.5rem; }
+    .header-actions { display: flex; align-items: center; gap: 6px; }
+    .user-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #eef6ff; border: 1.5px solid #bbdefb;
+      color: #0d47a1; padding: 4px 10px; border-radius: 20px;
+      font-size: 0.68rem; font-weight: 700; white-space: nowrap;
+    }
+    .user-badge i { font-size: 0.7rem; }
     .logout-btn {
       background: #f1f5f9; border: 1.5px solid var(--border);
       color: #64748b; padding: 6px 12px; border-radius: 6px;
@@ -141,15 +214,16 @@
       display: flex; border-bottom: 2px solid #e2e8f0;
       margin-bottom: 18px; gap: 4px; background: #f8fafc;
       border-radius: 8px 8px 0 0; padding: 4px 4px 0 4px;
+      flex-wrap: wrap;
     }
     .tab-btn {
-      flex: 1; padding: 10px 8px; background: transparent;
+      flex: 1; padding: 10px 6px; background: transparent;
       border: none; border-bottom: 3px solid transparent;
-      font-size: 0.78rem; font-weight: 700; color: #64748b;
+      font-size: 0.72rem; font-weight: 700; color: #64748b;
       cursor: pointer; transition: var(--transition);
       display: flex; align-items: center; justify-content: center;
-      gap: 6px; border-radius: 6px 6px 0 0; text-transform: uppercase;
-      letter-spacing: 0.03em;
+      gap: 5px; border-radius: 6px 6px 0 0; text-transform: uppercase;
+      letter-spacing: 0.02em; white-space: nowrap;
     }
     .tab-btn:hover { background: #eef2f7; color: var(--primary); }
     .tab-btn.active { color: var(--secondary); border-bottom-color: var(--secondary); background: #fff; }
@@ -171,6 +245,8 @@
     .form-group input[type="file"],
     .form-group input[type="color"],
     .form-group input[type="password"],
+    .form-group input[type="date"],
+    .form-group input[type="email"],
     .form-group select,
     .form-group textarea {
       width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
@@ -379,7 +455,7 @@
     .help-fab:hover { background: #d97700; transform: scale(1.08); }
     .help-fab.active { background: var(--primary); }
 
-    /* ===== LABEL FRAME (preview wrapper) + LABEL CARD (exact-size, logical px) ===== */
+    /* ===== LABEL FRAME ===== */
     .label-frame { position: relative; width: 100%; transition: transform .2s ease; }
     .label-frame:hover { transform: translateY(-2px); }
     .label-frame.hidden-by-search { display: none; }
@@ -574,6 +650,7 @@
       .top-actions .btn { flex: 1; }
       .tab-btn { font-size: 0.7rem; padding: 8px 4px; }
       .select-toolbar { padding: 8px 14px; }
+      .login-features { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
       .sidebar { max-height: 60vh; }
@@ -608,12 +685,16 @@
 
     .user-item { display: flex; align-items: center; justify-content: space-between; background: #f9fbfd; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.8rem; transition: var(--transition); }
     .user-item:hover { background: #f0f4fa; border-color: var(--secondary); }
-    .user-item .user-name { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+    .user-item .user-name { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .user-item .user-actions { display: flex; gap: 6px; }
     .user-item .user-actions button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 0.75rem; transition: var(--transition); color: #64748b; }
     .user-item .user-actions button:hover { background: #e2e8f0; color: var(--primary); }
     .user-item .user-actions button.del:hover { background: #fee2e2; color: var(--danger); }
     .admin-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--secondary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pending-badge { display: inline-flex; align-items: center; gap: 4px; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .trial-badge { display: inline-flex; align-items: center; gap: 4px; background: #0d47a1; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sub-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--success); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .expired-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
     .auto-size-banner { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1.5px solid #a5d6a7; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .auto-size-banner .asb-text { font-size: 0.75rem; font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; }
@@ -810,7 +891,7 @@
     }
     .apply-target-info i { color: var(--secondary); }
 
-    /* ===== QR SCAN ACTION DROPDOWN (inside Codes dropdown) ===== */
+    /* ===== QR SCAN ACTION DROPDOWN ===== */
     .qr-scan-row {
       padding: 8px 14px;
       background: #faf3fc;
@@ -846,7 +927,6 @@
       box-shadow: 0 0 0 3px rgba(123,31,162,0.15);
     }
 
-    /* ===== QR SCAN ACTION DROPDOWN (for "Both Together" section) ===== */
     .qr-scan-row-both {
       padding: 8px 14px;
       background: #fff7ed;
@@ -882,9 +962,153 @@
       box-shadow: 0 0 0 3px rgba(242,133,0,0.15);
     }
 
+    .qr-scan-row-vector {
+      padding: 8px 14px;
+      background: #fff3e0;
+      border-bottom: 1px solid #ffe0b2;
+    }
+    .qr-scan-row-vector .qr-scan-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #e65100;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .qr-scan-row-vector select {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #1a2634;
+      background: #fff;
+      border: 1.5px solid #ffb74d;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .qr-scan-row-vector select:focus {
+      outline: none;
+      border-color: #e65100;
+      box-shadow: 0 0 0 3px rgba(230,81,0,0.15);
+    }
+
+    /* ===== CUSTOMER DASHBOARD TAB ===== */
+    .customer-panel { display: none; }
+    .customer-panel.active { display: block; }
+
+    .customer-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .summary-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; text-align: center;
+      box-shadow: var(--shadow-sm); transition: var(--transition);
+    }
+    .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .summary-card .sc-icon { font-size: 1.3rem; color: var(--secondary); margin-bottom: 4px; }
+    .summary-card .sc-value { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .summary-card .sc-label { font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .sub-status-banner {
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; font-size: 0.8rem; font-weight: 600;
+    }
+    .sub-status-banner.trial { background: #e3f2fd; border: 1.5px solid #90caf9; color: #0d47a1; }
+    .sub-status-banner.active { background: #e8f5e9; border: 1.5px solid #a5d6a7; color: #1b5e20; }
+    .sub-status-banner.expired { background: #ffebee; border: 1.5px solid #ef9a9a; color: #b71c1c; }
+    .sub-status-banner.pending { background: #fff8e1; border: 1.5px solid #ffe082; color: #e65100; }
+    .sub-status-banner .ssb-text { display: flex; align-items: center; gap: 8px; }
+    .sub-status-banner .ssb-text i { font-size: 1.1rem; }
+    .sub-status-banner .ssb-action { display: flex; gap: 6px; }
+    .sub-status-banner .ssb-action button { padding: 6px 14px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: none; transition: var(--transition); }
+    .sub-status-banner .ssb-action .btn-renew { background: var(--secondary); color: #fff; }
+    .sub-status-banner .ssb-action .btn-renew:hover { background: #d97700; }
+    .sub-status-banner .ssb-action .btn-contact { background: var(--primary); color: #fff; }
+    .sub-status-banner .ssb-action .btn-contact:hover { background: #0f1a28; }
+
+    .feature-list { list-style: none; padding: 0; margin: 0; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0; font-size: 0.78rem; color: #2c3e50;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .feature-list li:last-child { border-bottom: none; }
+    .feature-list li i { color: var(--success); font-size: 0.85rem; margin-top: 2px; flex-shrink: 0; }
+
+    .pricing-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 14px; }
+    .pricing-card {
+      background: #fff; border: 2px solid var(--border); border-radius: 12px;
+      padding: 18px 14px; text-align: center; transition: var(--transition);
+      position: relative; cursor: pointer;
+    }
+    .pricing-card:hover { border-color: var(--secondary); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .pricing-card.featured { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(242,133,0,0.15); }
+    .pricing-card .pc-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pricing-card .pc-name { font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .pricing-card .pc-price { font-size: 1.6rem; font-weight: 900; color: var(--secondary); margin: 8px 0; }
+    .pricing-card .pc-price small { font-size: 0.7rem; font-weight: 600; color: #64748b; }
+    .pricing-card .pc-desc { font-size: 0.7rem; color: #64748b; margin-bottom: 12px; line-height: 1.4; }
+    .pricing-card .pc-features { list-style: none; padding: 0; margin: 0 0 14px; text-align: left; }
+    .pricing-card .pc-features li { font-size: 0.7rem; padding: 3px 0; color: #2c3e50; display: flex; align-items: center; gap: 5px; }
+    .pricing-card .pc-features li i { color: var(--success); font-size: 0.65rem; }
+    .pricing-card .pc-btn { width: 100%; padding: 9px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; border: none; transition: var(--transition); }
+    .pricing-card .pc-btn.primary { background: var(--secondary); color: #fff; }
+    .pricing-card .pc-btn.primary:hover { background: #d97700; }
+    .pricing-card .pc-btn.secondary { background: var(--primary); color: #fff; }
+    .pricing-card .pc-btn.secondary:hover { background: #0f1a28; }
+    .pricing-card .pc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== ADMIN CUSTOMER PANEL ===== */
+    .admin-customer-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+    .admin-customer-table th { background: #f1f5f9; padding: 8px 6px; text-align: left; font-weight: 700; color: #4a5a6e; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+    .admin-customer-table td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; color: #1a2634; vertical-align: middle; }
+    .admin-customer-table tr:hover td { background: #f8fafc; }
+    .admin-customer-table .action-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .admin-customer-table .action-btns button { padding: 3px 8px; border-radius: 5px; font-size: 0.65rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #fff; transition: var(--transition); white-space: nowrap; }
+    .admin-customer-table .action-btns button:hover { background: #f0f4fa; border-color: var(--secondary); }
+    .admin-customer-table .action-btns button.approve { background: var(--success); color: #fff; border-color: var(--success); }
+    .admin-customer-table .action-btns button.approve:hover { background: #1b5e20; }
+    .admin-customer-table .action-btns button.reject { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .admin-customer-table .action-btns button.reject:hover { background: #8e0000; }
+
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+    .status-dot.active { background: var(--success); }
+    .status-dot.pending { background: #f59e0b; }
+    .status-dot.expired { background: var(--danger); }
+    .status-dot.trial { background: #0d47a1; }
+
+    .customer-detail-card {
+      background: #f8fafc; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 14px; margin-bottom: 12px;
+    }
+    .customer-detail-card h4 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+    .customer-detail-card .cd-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.75rem; border-bottom: 1px dashed #e2e8f0; }
+    .customer-detail-card .cd-row:last-child { border-bottom: none; }
+    .customer-detail-card .cd-row .cd-label { color: #64748b; font-weight: 600; }
+    .customer-detail-card .cd-row .cd-value { font-weight: 700; color: var(--primary); }
+
+    /* ===== FIREBASE STATUS BAR ===== */
+    .firebase-status {
+      font-size: 0.65rem; padding: 4px 10px; border-radius: 20px;
+      display: inline-flex; align-items: center; gap: 5px; font-weight: 600;
+      background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7;
+    }
+    .firebase-status.offline { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
+    .firebase-status .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
     @media (max-width: 600px) {
       .apply-fields-grid { grid-template-columns: 1fr; }
       .field-row-split { grid-template-columns: 1fr; }
+      .pricing-cards { grid-template-columns: 1fr; }
+      .customer-summary { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -892,43 +1116,123 @@
 
 <!-- ============ LOGIN ============ -->
 <div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="logo-circle"><i class="fas fa-tag"></i></div>
-      <h1>LynkKar Pro Label Studio</h1>
-      <p>Sign in to access your dashboard</p>
-    </div>
-    <div class="login-error" id="loginError">
-      <i class="fas fa-exclamation-circle"></i>
-      <span id="loginErrorMsg">Invalid username or password.</span>
-    </div>
-    <form id="loginForm" autocomplete="off">
-      <div class="login-field">
-        <label for="loginUser">Username</label>
-        <div class="field-wrap">
-          <i class="fas fa-user field-icon"></i>
-          <input type="text" id="loginUser" placeholder="Enter username" required autocomplete="username">
+  <div class="login-screen-inner">
+    <div class="login-left">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="logo-circle"><i class="fas fa-tag"></i></div>
+          <h1>LynkKar Pro Label Studio</h1>
+          <p>Sign in to access your dashboard</p>
         </div>
-      </div>
-      <div class="login-field">
-        <label for="loginPass">Password</label>
-        <div class="field-wrap">
-          <i class="fas fa-lock field-icon"></i>
-          <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
-          <button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password">
-            <i class="fas fa-eye" id="togglePassIcon"></i>
+        <div class="login-error" id="loginError">
+          <i class="fas fa-exclamation-circle"></i>
+          <span id="loginErrorMsg">Invalid email or password.</span>
+        </div>
+        <form id="loginForm" autocomplete="off">
+          <div class="login-field">
+            <label for="loginEmail">Email</label>
+            <div class="field-wrap">
+              <i class="fas fa-envelope field-icon"></i>
+              <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+            </div>
+          </div>
+          <div class="login-field">
+            <label for="loginPass">Password</label>
+            <div class="field-wrap">
+              <i class="fas fa-lock field-icon"></i>
+              <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
+              <button type="button" class="toggle-pass" id="togglePassBtn" title="Show / hide password">
+                <i class="fas fa-eye" id="togglePassIcon"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="login-btn" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i> Sign In
           </button>
+          <div style="text-align:center; margin-top:12px;">
+            <button type="button" class="login-btn secondary" id="showSignupBtn" style="padding:10px; font-size:0.85rem;">
+              <i class="fas fa-user-plus"></i> Create Account
+            </button>
+          </div>
+        </form>
+        <div class="login-footer">
+          © 2025 LynkKar Pro Label Studio. All Rights Reserved.<br>
+          <a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp">
+            <i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757
+          </a>
+          <div style="margin-top:6px;"><span class="firebase-status" id="firebaseStatus"><span class="dot"></span> Firebase connected</span></div>
         </div>
       </div>
-      <button type="submit" class="login-btn" id="loginBtn">
-        <i class="fas fa-sign-in-alt"></i> Sign In
-      </button>
+    </div>
+
+    <!-- Animated features on login screen -->
+    <div class="login-features">
+      <div class="feature-card">
+        <i class="fas fa-barcode"></i>
+        <h4>Barcode & QR Labels</h4>
+        <p>Generate EAN, UPC, CODE128 barcodes and QR codes instantly</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-file-csv"></i>
+        <h4>Bulk Import</h4>
+        <p>Upload CSV, Excel or JSON to create hundreds of labels in seconds</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-paint-brush"></i>
+        <h4>Custom Designs</h4>
+        <p>Drag-and-drop placement, themes, fonts and full color control</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-file-pdf"></i>
+        <h4>PDF & Vector Export</h4>
+        <p>Print-ready PDFs plus .EPS and .AI vector files for designers</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-cloud"></i>
+        <h4>Cloud Sync</h4>
+        <p>Your labels and settings sync securely via Firebase</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-crown"></i>
+        <h4>3-Day Free Trial</h4>
+        <p>Full access for 3 days. Subscribe anytime to continue</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SIGNUP MODAL ============ -->
+<div class="auth-modal-overlay" id="signupModal">
+  <div class="auth-modal">
+    <button class="auth-close" id="signupCloseBtn"><i class="fas fa-times"></i></button>
+    <h2><i class="fas fa-user-plus" style="color:var(--secondary);"></i> Create Account</h2>
+    <p class="auth-sub">Start your 3-day free trial. No credit card required.</p>
+    <div class="auth-msg" id="signupMsg"></div>
+    <form id="signupForm">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Your name" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="At least 6 characters" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="signupConfirm" placeholder="Re-enter password" required>
+      </div>
+      <div class="auth-actions">
+        <button type="button" class="btn btn-outline" id="signupCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-success" id="signupSubmitBtn"><i class="fas fa-check"></i> Create Account</button>
+      </div>
     </form>
-    <div class="login-footer">
-      © 2025 LynkKar Pro Label Studio. All Rights Reserved.<br>
-      <a href="https://wa.me/923216175757" target="_blank" rel="noopener" class="login-whatsapp">
-        <i class="fab fa-whatsapp"></i> WhatsApp: 0321 6175757
-      </a>
+    <div style="margin-top:14px; font-size:0.72rem; color:#94a3b8; text-align:center; line-height:1.5;">
+      By signing up you agree to our Terms of Service.<br>
+      Your account will be reviewed by an admin before activation.
     </div>
   </div>
 </div>
@@ -948,15 +1252,20 @@
           <i class="fas fa-tag main-icon"></i>
           <span>LynkKar Pro</span>
         </div>
-        <button class="logout-btn" id="logoutBtn" title="Sign out">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
+        <div class="header-actions">
+          <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> <span id="userBadgeName">User</span></span>
+          <button class="logout-btn" id="logoutBtn" title="Sign out">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
       </div>
 
       <div class="tab-nav">
         <button class="tab-btn active" data-tab="tabMain"><i class="fas fa-tag"></i> <span>Label</span></button>
         <button class="tab-btn" data-tab="tabBulk"><i class="fas fa-file-csv"></i> <span>Bulk</span></button>
         <button class="tab-btn" data-tab="tabSettings"><i class="fas fa-cog"></i> <span>Settings</span></button>
+        <button class="tab-btn" data-tab="tabCustomer"><i class="fas fa-crown"></i> <span>Plan</span></button>
+        <button class="tab-btn" data-tab="tabAdmin" id="adminTabBtn" style="display:none;"><i class="fas fa-users-cog"></i> <span>Customers</span></button>
       </div>
 
       <!-- ===== MAIN TAB ===== -->
@@ -1098,7 +1407,6 @@
             <label class="switch"><input type="checkbox" id="dualCodeMode"><span class="slider"></span></label>
           </div>
 
-          <!-- ===== Code Size quick controls on Label tab ===== -->
           <div class="section-title"><i class="fas fa-expand"></i> Code Size (Barcode &amp; QR)</div>
           <div class="size-slider-group code-size-slider">
             <div class="ssg-header"><span>Barcode Height</span><span class="ssg-val" id="barcodeHeightVal">48px</span></div>
@@ -1433,6 +1741,22 @@
         <input type="file" id="importProjectInput" accept=".json" style="display:none;">
         <span class="help-text">Labels are also auto-saved in this browser.</span>
       </div>
+
+      <!-- ===== CUSTOMER PLAN TAB ===== -->
+      <div class="tab-panel" id="tabCustomer">
+        <div class="tab-content-note">
+          <i class="fas fa-crown"></i> Your subscription status, plan details and billing.
+        </div>
+        <div id="customerPanelContent"></div>
+      </div>
+
+      <!-- ===== ADMIN CUSTOMER TAB ===== -->
+      <div class="tab-panel" id="tabAdmin">
+        <div class="tab-content-note">
+          <i class="fas fa-users-cog"></i> Manage customers, approve accounts and subscriptions.
+        </div>
+        <div id="adminCustomerContent"></div>
+      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -1489,6 +1813,26 @@
             </div>
             <button class="dd-item" data-code="both" data-type="pdf"><i class="fas fa-file-pdf" style="color:#c62828;"></i> Barcode + QR as PDF</button>
             <button class="dd-item" data-code="both" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> Barcode + QR as JPG (ZIP)</button>
+
+            <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#e65100; background:#fff3e0; border-bottom:1px solid #ffe0b2; border-top:1px solid #e2e8f0;">Vector Formats (Adobe Illustrator)</div>
+            <div class="qr-scan-row-vector">
+              <div class="qr-scan-label"><i class="fas fa-mobile-alt"></i> What QR opens when scanned</div>
+              <select id="qrScanActionVector">
+                <option value="website">Product Website URL</option>
+                <option value="fullPrice">Full Info (Name + Code + Price + Size)</option>
+                <option value="full">Full Info (Name + Code)</option>
+                <option value="sku">SKU / Barcode Only</option>
+                <option value="whatsapp">WhatsApp Link</option>
+                <option value="vcard">vCard Contact</option>
+                <option value="custom">Custom Text</option>
+              </select>
+            </div>
+            <button class="dd-item" data-code="barcode" data-type="eps"><i class="fas fa-file-code" style="color:#e65100;"></i> All Barcodes as .EPS (ZIP)</button>
+            <button class="dd-item" data-code="qrcode" data-type="eps"><i class="fas fa-file-code" style="color:#e65100;"></i> All QR Codes as .EPS (ZIP)</button>
+            <button class="dd-item" data-code="both" data-type="eps"><i class="fas fa-file-code" style="color:#e65100;"></i> Barcode + QR as .EPS (ZIP)</button>
+            <button class="dd-item" data-code="barcode" data-type="ai"><i class="fas fa-file-code" style="color:#e65100;"></i> All Barcodes as .AI (ZIP)</button>
+            <button class="dd-item" data-code="qrcode" data-type="ai"><i class="fas fa-file-code" style="color:#e65100;"></i> All QR Codes as .AI (ZIP)</button>
+            <button class="dd-item" data-code="both" data-type="ai"><i class="fas fa-file-code" style="color:#e65100;"></i> Barcode + QR as .AI (ZIP)</button>
           </div>
         </div>
         <button class="btn btn-outline" id="clearListBtn" style="width: auto; padding: 10px 20px;"><i class="fas fa-trash-alt"></i> Clear All</button>
@@ -1798,6 +2142,28 @@
 <div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
 
 <script>
+  // ==================== FIREBASE CONFIG ====================
+  const firebaseConfig = {
+    apiKey: "AIzaSyACXlWavyX-Bn1jgrOgtJKuSpwaCA3rYBs",
+    authDomain: "lynkkar-solutions.firebaseapp.com",
+    projectId: "lynkkar-solutions",
+    storageBucket: "lynkkar-solutions.firebasestorage.app",
+    messagingSenderId: "263135428246",
+    appId: "1:263135428246:web:8625eb640edbbc69270cb7"
+  };
+
+  let fbApp, fbAuth, fbDb;
+  let firebaseReady = false;
+  try {
+    fbApp = firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+    firebaseReady = true;
+  } catch (e) {
+    console.warn('Firebase init failed:', e);
+    firebaseReady = false;
+  }
+
   // ==================== CONSTANTS & HELPERS ====================
   const USERS_KEY = 'lynkkar_users';
   const SESSION_KEY = 'lynkkar_logged_in_user';
@@ -1811,6 +2177,14 @@
   const DEFAULT_BARCODE_HEIGHT = 48;
   const DEFAULT_QR_SIZE = 84;
   const DEFAULT_BARCODE_BAR = 0;
+
+  // Subscription constants
+  const TRIAL_DAYS = 3;
+  const SUBSCRIPTION_PRICES = {
+    starter: { name: 'Starter', price: 999, period: 'month', features: ['Up to 500 labels/month', 'Basic barcode & QR', 'PDF export', 'Email support'] },
+    pro: { name: 'Pro', price: 2499, period: 'month', features: ['Unlimited labels', 'All barcode formats', 'PDF + JPG + Vector export', 'Bulk CSV/Excel import', 'Priority support'] },
+    business: { name: 'Business', price: 5999, period: 'month', features: ['Everything in Pro', 'Multi-user access', 'Custom label templates', 'API access', 'Dedicated account manager'] }
+  };
 
   const $ = (id) => document.getElementById(id);
 
@@ -1856,7 +2230,19 @@
     toastEl._timer = setTimeout(() => toastEl.classList.remove('show'), 3200);
   }
 
-  // ==================== USERS ====================
+  // ==================== AUTH STATE ====================
+  let currentUser = null;        // { uid, email, name, role, subscription, trialStart, ... }
+  let currentUserDocRef = null;
+  let userListenerUnsub = null;
+
+  function setFirebaseStatus(online) {
+    const el = $('firebaseStatus');
+    if (!el) return;
+    if (online) { el.className = 'firebase-status'; el.innerHTML = '<span class="dot"></span> Firebase connected'; }
+    else { el.className = 'firebase-status offline'; el.innerHTML = '<span class="dot"></span> Firebase offline — local mode'; }
+  }
+
+  // ==================== LOCAL AUTH FALLBACK ====================
   function randomSalt() {
     const a = new Uint8Array(16);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
@@ -1876,83 +2262,80 @@
     for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
     return 'f' + (h >>> 0).toString(16);
   }
-  async function makeUser(username, password, role) {
-    const salt = randomSalt();
-    return { username, salt, hash: await hashPassword(password, salt), role };
-  }
-  function getUsers() { const u = lsGet(USERS_KEY, []); return Array.isArray(u) ? u : []; }
-  function saveUsers(users) { lsSet(USERS_KEY, users); }
-  async function ensureUsers() {
-    let users = getUsers();
+  function getLocalUsers() { const u = lsGet(USERS_KEY, []); return Array.isArray(u) ? u : []; }
+  function saveLocalUsers(users) { lsSet(USERS_KEY, users); }
+  async function ensureLocalAdmin() {
+    let users = getLocalUsers();
     if (!users.length) {
-      users = [await makeUser('admin', 'Pakistan@5757', 'admin')];
-    } else {
-      for (const u of users) {
-        if (u.password !== undefined && !u.hash) {
-          u.salt = randomSalt();
-          u.hash = await hashPassword(u.password, u.salt);
-          delete u.password;
-        }
-      }
+      const salt = randomSalt();
+      users = [{ username: 'admin', email: 'admin@lynkkar.local', salt, hash: await hashPassword('Pakistan@5757', salt), role: 'admin', status: 'active', subscription: 'business', trialStart: null }];
     }
-    saveUsers(users);
-  }
-  function getCurrentUser() {
-    const username = sessionStorage.getItem(SESSION_KEY);
-    return username ? (getUsers().find(u => u.username === username) || null) : null;
+    saveLocalUsers(users);
   }
 
-  // ==================== PLACEMENT ====================
-  function getPlacementOrder() {
-    const p = lsGet(PLACEMENT_KEY, null);
-    if (Array.isArray(p) && p.length === DEFAULT_PLACEMENT.length && DEFAULT_PLACEMENT.every(k => p.includes(k))) return p;
-    return [...DEFAULT_PLACEMENT];
+  // ==================== FIRESTORE USER DOC ====================
+  async function ensureUserDoc(uid, data) {
+    if (!firebaseReady || !uid) return null;
+    const ref = fbDb.collection('users').doc(uid);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      const now = Date.now();
+      const trialStart = now;
+      const trialEnd = now + TRIAL_DAYS * 24 * 60 * 60 * 1000;
+      const doc = {
+        email: data.email || '',
+        name: data.name || '',
+        role: 'user',
+        status: 'pending',           // pending | active | rejected
+        subscription: 'trial',       // trial | starter | pro | business | expired
+        trialStart,
+        trialEnd,
+        subscriptionStart: null,
+        subscriptionEnd: null,
+        createdAt: now,
+        updatedAt: now
+      };
+      await ref.set(doc);
+      return { uid, ...doc };
+    }
+    return { uid, ...snap.data() };
   }
-  function savePlacementOrder(order) { lsSet(PLACEMENT_KEY, order); }
-  let dragHandlersAttached = false;
-  function initPlacementGrid() {
-    const grid = $('placementGrid');
-    const order = getPlacementOrder();
-    const cells = Array.from(grid.querySelectorAll('.placement-cell'));
-    order.forEach(el => { const c = cells.find(x => x.dataset.el === el); if (c) grid.appendChild(c); });
-    if (!dragHandlersAttached) { attachDragHandlers(); dragHandlersAttached = true; }
+
+  async function loadUserDoc(uid) {
+    if (!firebaseReady || !uid) return null;
+    const snap = await fbDb.collection('users').doc(uid).get();
+    if (!snap.exists) return null;
+    return { uid, ...snap.data() };
   }
-  function attachDragHandlers() {
-    const grid = $('placementGrid');
-    let dragEl = null;
-    grid.querySelectorAll('.placement-cell').forEach(cell => {
-      cell.addEventListener('dragstart', (e) => { dragEl = cell; cell.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', cell.dataset.el); } catch (_) {} });
-      cell.addEventListener('dragend', () => {
-        cell.classList.remove('dragging');
-        grid.querySelectorAll('.placement-cell').forEach(c => c.classList.remove('drag-over'));
-        savePlacementOrder(Array.from(grid.querySelectorAll('.placement-cell')).map(c => c.dataset.el));
-        if (labelsList.length) renderGrid();
-        showToast('Placement updated', 'fa-arrows-alt');
-      });
-      cell.addEventListener('dragover', (e) => { e.preventDefault(); if (dragEl && dragEl !== cell) cell.classList.add('drag-over'); });
-      cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
-      cell.addEventListener('drop', (e) => {
-        e.preventDefault(); cell.classList.remove('drag-over');
-        if (dragEl && dragEl !== cell) {
-          const all = Array.from(grid.querySelectorAll('.placement-cell'));
-          if (all.indexOf(dragEl) < all.indexOf(cell)) cell.parentNode.insertBefore(dragEl, cell.nextSibling);
-          else cell.parentNode.insertBefore(dragEl, cell);
-        }
-      });
-    });
+
+  function computeSubscriptionState(u) {
+    if (!u) return { label: 'Unknown', cls: 'expired', text: 'No account', canUse: false };
+    const now = Date.now();
+    if (u.status === 'pending') return { label: 'Pending approval', cls: 'pending', text: 'Waiting for admin approval', canUse: false };
+    if (u.status === 'rejected') return { label: 'Rejected', cls: 'expired', text: 'Account rejected. Contact support.', canUse: false };
+    if (u.subscription === 'trial') {
+      const end = u.trialEnd || 0;
+      if (now > end) return { label: 'Trial expired', cls: 'expired', text: 'Your free trial has ended. Subscribe to continue.', canUse: false };
+      const daysLeft = Math.ceil((end - now) / (24 * 60 * 60 * 1000));
+      return { label: 'Free trial', cls: 'trial', text: `Trial active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`, canUse: true };
+    }
+    if (u.subscription && u.subscription !== 'trial' && u.subscription !== 'expired') {
+      const end = u.subscriptionEnd || 0;
+      if (now > end) return { label: 'Subscription expired', cls: 'expired', text: 'Your subscription has expired. Renew to continue.', canUse: false };
+      const daysLeft = Math.ceil((end - now) / (24 * 60 * 60 * 1000));
+      return { label: u.subscription.charAt(0).toUpperCase() + u.subscription.slice(1) + ' plan', cls: 'active', text: `Active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining`, canUse: true };
+    }
+    return { label: 'Inactive', cls: 'expired', text: 'No active subscription.', canUse: false };
   }
-  $('resetPlacementBtn').addEventListener('click', () => {
-    savePlacementOrder([...DEFAULT_PLACEMENT]);
-    initPlacementGrid();
-    if (labelsList.length) renderGrid();
-    showToast('Placement reset to default', 'fa-undo');
-  });
+
+  function isSubscriptionActive(u) {
+    return computeSubscriptionState(u).canUse;
+  }
 
   // ==================== LOGIN ====================
   const loginScreen = $('loginScreen'), dashboardApp = $('dashboardApp');
-  const loginUser = $('loginUser'), loginPass = $('loginPass');
+  const loginEmail = $('loginEmail'), loginPass = $('loginPass');
   const loginError = $('loginError'), loginErrorMsg = $('loginErrorMsg'), loginBtn = $('loginBtn');
-  const MAX_TRIES = 5, LOCK_MS = 30000;
 
   function showDashboard() {
     loginScreen.classList.add('hidden');
@@ -1960,6 +2343,14 @@
     setTimeout(() => {
       updatePreview(); applyStickerSize(); renderImagePreview(); renderUserList();
       initPlacementGrid(); applyTextSizes(); applyCodeSizes(); renderGrid();
+      renderCustomerPanel();
+      if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'admin@lynkkar.local')) {
+        $('adminTabBtn').style.display = '';
+        renderAdminCustomerPanel();
+      } else {
+        $('adminTabBtn').style.display = 'none';
+      }
+      updateUserBadge();
     }, 30);
   }
   function showLogin() {
@@ -1968,58 +2359,183 @@
     loginPass.value = '';
     loginError.classList.remove('show');
   }
-  function lockRemaining() {
-    const until = parseInt(sessionStorage.getItem('lk_lock') || '0', 10);
-    return Math.max(0, until - Date.now());
+  function updateUserBadge() {
+    const nameEl = $('userBadgeName');
+    if (currentUser) {
+      const display = currentUser.name || currentUser.email || 'User';
+      nameEl.innerText = display.length > 18 ? display.slice(0, 16) + '…' : display;
+      $('userBadge').title = currentUser.email + (currentUser.role === 'admin' ? ' (Admin)' : '');
+    } else nameEl.innerText = 'Guest';
   }
-  async function attemptLogin(user, pass) {
-    const u = getUsers().find(x => x.username === user);
-    if (!u) return false;
-    const h = await hashPassword(pass, u.salt);
-    if (h === u.hash) { sessionStorage.setItem(SESSION_KEY, u.username); return true; }
-    return false;
+
+  async function doLogin(email, password) {
+    if (firebaseReady) {
+      try {
+        const cred = await fbAuth.signInWithEmailAndPassword(email, password);
+        // Auth state listener will handle the rest
+        return { ok: true };
+      } catch (err) {
+        // If Firebase user doesn't exist yet but local admin exists, fall back
+        const localUsers = getLocalUsers();
+        const local = localUsers.find(u => (u.email || u.username) === email);
+        if (local) {
+          const h = await hashPassword(password, local.salt);
+          if (h === local.hash) {
+            currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
+            return { ok: true, local: true };
+          }
+        }
+        return { ok: false, error: err.message };
+      }
+    } else {
+      // Offline mode: local users only
+      const localUsers = getLocalUsers();
+      const local = localUsers.find(u => (u.email || u.username) === email);
+      if (!local) return { ok: false, error: 'No account found' };
+      const h = await hashPassword(password, local.salt);
+      if (h !== local.hash) return { ok: false, error: 'Incorrect password' };
+      currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
+      return { ok: true, local: true };
+    }
   }
+
   $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const wait = lockRemaining();
-    if (wait > 0) {
-      loginErrorMsg.innerText = `Too many attempts. Try again in ${Math.ceil(wait / 1000)}s.`;
-      loginError.classList.add('show'); return;
-    }
     loginBtn.disabled = true;
-    const ok = await attemptLogin(loginUser.value.trim(), loginPass.value);
+    const email = loginEmail.value.trim();
+    const pass = loginPass.value;
+    const res = await doLogin(email, pass);
     loginBtn.disabled = false;
-    if (ok) {
-      sessionStorage.removeItem('lk_fails'); loginError.classList.remove('show');
-      showDashboard(); showToast('Welcome back, ' + sessionStorage.getItem(SESSION_KEY) + '!', 'fa-user-check');
-    } else {
-      const fails = parseInt(sessionStorage.getItem('lk_fails') || '0', 10) + 1;
-      sessionStorage.setItem('lk_fails', String(fails));
-      if (fails >= MAX_TRIES) {
-        sessionStorage.setItem('lk_lock', String(Date.now() + LOCK_MS)); sessionStorage.setItem('lk_fails', '0');
-        loginErrorMsg.innerText = 'Too many failed attempts. Locked for 30 seconds.';
+    if (res.ok) {
+      if (res.local) {
+        // local fallback: show dashboard directly
+        loginError.classList.remove('show');
+        showDashboard();
+        showToast('Welcome back, ' + (currentUser.name || 'Admin') + '!', 'fa-user-check');
       } else {
-        loginErrorMsg.innerText = `Invalid username or password. (${MAX_TRIES - fails} tries left)`;
+        // Firebase auth state listener will call showDashboard
+        loginError.classList.remove('show');
       }
+    } else {
+      loginErrorMsg.innerText = 'Login failed: ' + (res.error || 'Unknown error');
       loginError.classList.add('show');
-      loginPass.value = ''; loginPass.focus();
-      const card = document.querySelector('.login-card');
-      card.style.animation = 'none';
-      setTimeout(() => card.style.animation = 'loginIn 0.4s ease', 10);
     }
   });
+
   $('togglePassBtn').addEventListener('click', () => {
     const icon = $('togglePassIcon');
     if (loginPass.type === 'password') { loginPass.type = 'text'; icon.className = 'fas fa-eye-slash'; }
     else { loginPass.type = 'password'; icon.className = 'fas fa-eye'; }
   });
-  $('logoutBtn').addEventListener('click', () => {
+  $('logoutBtn').addEventListener('click', async () => {
     if (confirm('Sign out of LynkKar Pro Label Studio?')) {
+      if (firebaseReady && fbAuth.currentUser) { try { await fbAuth.signOut(); } catch (e) {} }
       sessionStorage.removeItem(SESSION_KEY);
-      showLogin(); loginUser.value = ''; loginPass.value = ''; loginUser.focus();
+      currentUser = null;
+      if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
+      showLogin(); loginEmail.value = ''; loginPass.value = '';
       showToast('Signed out successfully', 'fa-sign-out-alt');
     }
   });
+
+  // ==================== SIGNUP ====================
+  const signupModal = $('signupModal');
+  function openSignup() { signupModal.classList.add('show'); $('signupMsg').classList.remove('show'); }
+  function closeSignup() { signupModal.classList.remove('show'); }
+  $('showSignupBtn').addEventListener('click', openSignup);
+  $('signupCloseBtn').addEventListener('click', closeSignup);
+  $('signupCancelBtn').addEventListener('click', closeSignup);
+  signupModal.addEventListener('click', (e) => { if (e.target === signupModal) closeSignup(); });
+
+  function showSignupMsg(msg, isError) {
+    const el = $('signupMsg');
+    el.innerText = msg;
+    el.className = 'auth-msg show ' + (isError ? 'error' : 'success');
+  }
+
+  $('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('signupName').value.trim();
+    const email = $('signupEmail').value.trim();
+    const pass = $('signupPassword').value;
+    const confirm = $('signupConfirm').value;
+    if (!name || !email || !pass) return showSignupMsg('Please fill all fields.', true);
+    if (pass.length < 6) return showSignupMsg('Password must be at least 6 characters.', true);
+    if (pass !== confirm) return showSignupMsg('Passwords do not match.', true);
+
+    const btn = $('signupSubmitBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+    if (firebaseReady) {
+      try {
+        const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({ displayName: name });
+        await ensureUserDoc(cred.user.uid, { email, name });
+        // Sign out immediately so they must wait for admin approval
+        await fbAuth.signOut();
+        showSignupMsg('Account created! An admin will review and approve your account shortly.', false);
+        showToast('Account created — awaiting admin approval', 'fa-check-circle');
+        setTimeout(closeSignup, 2500);
+        $('signupForm').reset();
+      } catch (err) {
+        showSignupMsg('Could not create account: ' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
+      }
+    } else {
+      // Offline / local signup
+      const users = getLocalUsers();
+      if (users.find(u => (u.email || u.username) === email)) {
+        showSignupMsg('An account with this email already exists.', true);
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
+        return;
+      }
+      const salt = randomSalt();
+      const now = Date.now();
+      users.push({
+        username: name, email, salt, hash: await hashPassword(pass, salt),
+        role: 'user', status: 'pending',
+        subscription: 'trial', trialStart: now, trialEnd: now + TRIAL_DAYS * 24 * 60 * 60 * 1000
+      });
+      saveLocalUsers(users);
+      showSignupMsg('Account created! An admin will approve your account shortly.', false);
+      showToast('Account created — awaiting admin approval', 'fa-check-circle');
+      setTimeout(closeSignup, 2500);
+      $('signupForm').reset();
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Create Account';
+    }
+  });
+
+  // ==================== FIREBASE AUTH LISTENER ====================
+  function initAuthListener() {
+    if (!firebaseReady) { setFirebaseStatus(false); return; }
+    setFirebaseStatus(true);
+    fbAuth.onAuthStateChanged(async (user) => {
+      if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
+      if (user) {
+        const doc = await ensureUserDoc(user.uid, { email: user.email, name: user.displayName || user.email });
+        if (!doc) { showLogin(); return; }
+        currentUser = { uid: user.uid, email: user.email, name: user.displayName || doc.name || user.email, ...doc };
+        // Realtime updates
+        userListenerUnsub = fbDb.collection('users').doc(user.uid).onSnapshot(snap => {
+          if (snap.exists) {
+            currentUser = { uid: user.uid, email: user.email, name: user.displayName || snap.data().name || user.email, ...snap.data() };
+            updateUserBadge();
+            renderCustomerPanel();
+            if (currentUser.role === 'admin') { $('adminTabBtn').style.display = ''; renderAdminCustomerPanel(); }
+            else $('adminTabBtn').style.display = 'none';
+          }
+        });
+        if (currentUser.status === 'pending') {
+          showToast('Your account is pending admin approval. Some features may be restricted.', 'fa-clock');
+        }
+        showDashboard();
+      } else {
+        currentUser = null;
+        showLogin();
+      }
+    });
+  }
 
   // ==================== TABS ====================
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2029,6 +2545,8 @@
       btn.classList.add('active');
       const panel = $(btn.dataset.tab); if (panel) panel.classList.add('active');
       if (btn.dataset.tab === 'tabSettings') renderUserList();
+      if (btn.dataset.tab === 'tabCustomer') renderCustomerPanel();
+      if (btn.dataset.tab === 'tabAdmin') renderAdminCustomerPanel();
     });
   });
 
@@ -2050,7 +2568,7 @@
     'brandSize', 'productSize', 'detailsSize', 'priceSize', 'skuSize', 'labelBg', 'labelBorderColor', 'labelBorderWidth', 'labelRadius',
     'labelPadding', 'labelShadow', 'labelFont', 'labelFontWeight', 'labelTextAlign', 'labelLineHeight', 'layoutTheme', 'borderStyle', 'borderRadius',
     'thermalMode', 'sheetMode', 'pdfMargin', 'pdfGap', 'genStrategy', 'genLength', 'genPrefix', 'genSuffix', 'genStart', 'genAutoIncrement',
-    'barcodeHeight', 'qrSize', 'barcodeBarWidth', 'barcodeHeight2', 'qrSize2', 'barcodeBarWidth2', 'qrScanAction', 'qrScanActionBoth'];
+    'barcodeHeight', 'qrSize', 'barcodeBarWidth', 'barcodeHeight2', 'qrSize2', 'barcodeBarWidth2', 'qrScanAction', 'qrScanActionBoth', 'qrScanActionVector'];
 
   function saveSettings() {
     const s = {};
@@ -2119,32 +2637,37 @@
   function getLabelQrSize(lbl) { return (lbl && lbl.qrSize) ? lbl.qrSize : getGlobalQrSize(); }
   function getLabelBarWidth(lbl) { return (lbl && lbl.barcodeBarWidth !== undefined) ? lbl.barcodeBarWidth : getGlobalBarcodeBar(); }
 
-  // ==================== USER MANAGEMENT UI ====================
+  // ==================== LOCAL USER MANAGEMENT (Settings tab) ====================
   const userListContainer = $('userListContainer');
   function renderUserList() {
-    const users = getUsers(), current = getCurrentUser();
-    if (!current || current.role !== 'admin') {
-      userListContainer.innerHTML = '<div style="font-size:0.75rem;color:#64748b;padding:8px;">Only administrators can manage users.</div>';
+    if (!currentUser) return;
+    const users = getLocalUsers();
+    if (currentUser.role !== 'admin') {
+      userListContainer.innerHTML = '<div style="font-size:0.75rem;color:#64748b;padding:8px;">Only administrators can manage local users. Cloud users are managed in the Customers tab.</div>';
+      return;
+    }
+    if (!users.length) {
+      userListContainer.innerHTML = '<div style="font-size:0.75rem;color:#64748b;padding:8px;">No local users. Cloud accounts appear in the Customers tab.</div>';
       return;
     }
     userListContainer.innerHTML = users.map(u => `
       <div class="user-item">
-        <div class="user-name"><i class="fas fa-user-circle"></i> ${escapeHtml(u.username)}
+        <div class="user-name"><i class="fas fa-user-circle"></i> ${escapeHtml(u.username || u.email)}
           ${u.role === 'admin' ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
         </div>
         <div class="user-actions">
-          <button class="rst" data-user="${escapeHtml(u.username)}" title="Reset password"><i class="fas fa-key"></i></button>
-          ${u.username !== current.username ? `<button class="del" data-user="${escapeHtml(u.username)}" title="Delete user"><i class="fas fa-trash-alt"></i></button>` : ''}
+          <button class="rst" data-user="${escapeHtml(u.username || u.email)}" title="Reset password"><i class="fas fa-key"></i></button>
+          ${(u.username || u.email) !== (currentUser.email || 'admin') ? `<button class="del" data-user="${escapeHtml(u.username || u.email)}" title="Delete user"><i class="fas fa-trash-alt"></i></button>` : ''}
         </div>
       </div>`).join('');
   }
   userListContainer.addEventListener('click', async (e) => {
     const del = e.target.closest('.del'), rst = e.target.closest('.rst');
-    const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return;
+    if (!currentUser || currentUser.role !== 'admin') return;
     if (del) {
       const uname = del.dataset.user;
-      if (confirm(`Delete user "${uname}"? This cannot be undone.`)) {
-        saveUsers(getUsers().filter(u => u.username !== uname));
+      if (confirm(`Delete local user "${uname}"? This cannot be undone.`)) {
+        saveLocalUsers(getLocalUsers().filter(u => (u.username || u.email) !== uname));
         renderUserList(); showToast(`User "${uname}" deleted`, 'fa-user-minus');
       }
     } else if (rst) {
@@ -2152,34 +2675,243 @@
       const np = prompt(`New password for "${uname}" (min 4 characters):`);
       if (np === null) return;
       if (np.length < 4) return showToast('Password must be at least 4 characters', 'fa-exclamation-triangle');
-      const users = getUsers(); const u = users.find(x => x.username === uname); if (!u) return;
-      u.salt = randomSalt(); u.hash = await hashPassword(np, u.salt); saveUsers(users);
+      const users = getLocalUsers(); const u = users.find(x => (x.username || x.email) === uname); if (!u) return;
+      u.salt = randomSalt(); u.hash = await hashPassword(np, u.salt); saveLocalUsers(users);
       showToast(`Password reset for "${uname}"`, 'fa-key');
     }
   });
   $('addUserBtn').addEventListener('click', async () => {
-    const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return showToast('Only admins can add users', 'fa-exclamation-triangle');
+    if (!currentUser || currentUser.role !== 'admin') return showToast('Only admins can add local users', 'fa-exclamation-triangle');
     const username = $('newUsername').value.trim(), password = $('newUserPassword').value, role = $('newUserRole').value;
     if (!username || !password) return showToast('Enter username and password', 'fa-exclamation-triangle');
     if (password.length < 4) return showToast('Password must be at least 4 characters', 'fa-exclamation-triangle');
-    const users = getUsers();
-    if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) return showToast('Username already exists', 'fa-exclamation-triangle');
-    users.push(await makeUser(username, password, role)); saveUsers(users);
+    const users = getLocalUsers();
+    if (users.find(u => (u.username || u.email).toLowerCase() === username.toLowerCase())) return showToast('Username already exists', 'fa-exclamation-triangle');
+    const salt = randomSalt();
+    users.push({ username, email: username, salt, hash: await hashPassword(password, salt), role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null });
+    saveLocalUsers(users);
     $('newUsername').value = ''; $('newUserPassword').value = '';
-    renderUserList(); showToast(`User "${username}" added as ${role}`, 'fa-user-plus');
+    renderUserList(); showToast(`Local user "${username}" added as ${role}`, 'fa-user-plus');
   });
   $('changePasswordBtn').addEventListener('click', async () => {
-    const current = getCurrentUser(); if (!current) return showToast('Not logged in', 'fa-exclamation-triangle');
+    if (!currentUser) return showToast('Not logged in', 'fa-exclamation-triangle');
     const oldPass = $('currentPassword').value, newPass = $('newPassword').value, conf = $('confirmPassword').value;
     if (!oldPass || !newPass || !conf) return showToast('Fill all password fields', 'fa-exclamation-triangle');
-    if (await hashPassword(oldPass, current.salt) !== current.hash) return showToast('Current password is incorrect', 'fa-exclamation-triangle');
     if (newPass.length < 4) return showToast('New password must be at least 4 characters', 'fa-exclamation-triangle');
     if (newPass !== conf) return showToast('New passwords do not match', 'fa-exclamation-triangle');
-    const users = getUsers(); const u = users.find(x => x.username === current.username); if (!u) return;
-    u.salt = randomSalt(); u.hash = await hashPassword(newPass, u.salt); saveUsers(users);
-    $('currentPassword').value = ''; $('newPassword').value = ''; $('confirmPassword').value = '';
-    showToast('Password updated successfully', 'fa-key');
+    if (firebaseReady && fbAuth.currentUser) {
+      try {
+        const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
+        await fbAuth.currentUser.reauthenticateWithCredential(cred);
+        await fbAuth.currentUser.updatePassword(newPass);
+        $('currentPassword').value = ''; $('newPassword').value = ''; $('confirmPassword').value = '';
+        showToast('Password updated', 'fa-key');
+      } catch (err) { showToast('Could not update: ' + err.message, 'fa-exclamation-triangle'); }
+    } else {
+      const users = getLocalUsers(); const u = users.find(x => (x.email || x.username) === currentUser.email); if (!u) return;
+      if (await hashPassword(oldPass, u.salt) !== u.hash) return showToast('Current password is incorrect', 'fa-exclamation-triangle');
+      u.salt = randomSalt(); u.hash = await hashPassword(newPass, u.salt); saveLocalUsers(users);
+      $('currentPassword').value = ''; $('newPassword').value = ''; $('confirmPassword').value = '';
+      showToast('Password updated successfully', 'fa-key');
+    }
   });
+
+  // ==================== CUSTOMER PANEL ====================
+  function renderCustomerPanel() {
+    const host = $('customerPanelContent');
+    if (!host) return;
+    if (!currentUser) { host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Please sign in.</div>'; return; }
+
+    const state = computeSubscriptionState(currentUser);
+    const u = currentUser;
+
+    let bannerCls = 'trial', bannerIcon = 'fa-clock', bannerText = state.text, actionHtml = '';
+    if (state.cls === 'active') { bannerCls = 'active'; bannerIcon = 'fa-check-circle'; }
+    else if (state.cls === 'expired') { bannerCls = 'expired'; bannerIcon = 'fa-exclamation-circle'; }
+    else if (state.cls === 'pending') { bannerCls = 'pending'; bannerIcon = 'fa-hourglass-half'; }
+
+    if (state.cls === 'trial' || state.cls === 'expired') {
+      actionHtml = `<div class="ssb-action"><button class="btn-renew" onclick="window.scrollToPricing && window.scrollToPricing()"><i class="fas fa-crown"></i> Upgrade</button></div>`;
+    } else if (state.cls === 'active') {
+      actionHtml = `<div class="ssb-action"><button class="btn-contact" onclick="window.open('https://wa.me/${CONTACT_PHONE}?text=Subscription%20renewal','_blank')"><i class="fab fa-whatsapp"></i> Renew</button></div>`;
+    }
+
+    const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+    const trialEnd = u.trialEnd ? new Date(u.trialEnd).toLocaleDateString() : '—';
+    const subEnd = u.subscriptionEnd ? new Date(u.subscriptionEnd).toLocaleDateString() : '—';
+
+    host.innerHTML = `
+      <div class="sub-status-banner ${bannerCls}">
+        <div class="ssb-text"><i class="fas ${bannerIcon}"></i> <span>${escapeHtml(bannerText)}</span></div>
+        ${actionHtml}
+      </div>
+
+      <div class="customer-summary">
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-user"></i></div><div class="sc-value">${escapeHtml(u.name || '—')}</div><div class="sc-label">Account</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-envelope"></i></div><div class="sc-value" style="font-size:0.75rem;word-break:break-all;">${escapeHtml(u.email || '—')}</div><div class="sc-label">Email</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-calendar"></i></div><div class="sc-value" style="font-size:0.85rem;">${created}</div><div class="sc-label">Member since</div></div>
+        <div class="summary-card"><div class="sc-icon"><i class="fas fa-crown"></i></div><div class="sc-value" style="font-size:0.9rem;">${state.label}</div><div class="sc-label">Plan</div></div>
+      </div>
+
+      <div class="customer-detail-card">
+        <h4><i class="fas fa-info-circle"></i> Account details</h4>
+        <div class="cd-row"><span class="cd-label">Status</span><span class="cd-value"><span class="status-dot ${state.cls}"></span>${state.label}</span></div>
+        <div class="cd-row"><span class="cd-label">Role</span><span class="cd-value">${escapeHtml(u.role || 'user')}</span></div>
+        <div class="cd-row"><span class="cd-label">Trial ends</span><span class="cd-value">${trialEnd}</span></div>
+        <div class="cd-row"><span class="cd-label">Subscription ends</span><span class="cd-value">${subEnd}</span></div>
+      </div>
+
+      <div class="section-title" style="margin-top:20px;"><i class="fas fa-gem"></i> Plan features</div>
+      <ul class="feature-list">
+        <li><i class="fas fa-check-circle"></i> Generate unlimited barcode & QR labels</li>
+        <li><i class="fas fa-check-circle"></i> Bulk import from CSV, Excel & JSON</li>
+        <li><i class="fas fa-check-circle"></i> Custom label designer with drag-and-drop placement</li>
+        <li><i class="fas fa-check-circle"></i> PDF, JPG and vector export (.EPS / .AI)</li>
+        <li><i class="fas fa-check-circle"></i> Cloud sync across devices (Firebase)</li>
+        <li><i class="fas fa-check-circle"></i> Priority WhatsApp support</li>
+      </ul>
+
+      <div class="section-title" style="margin-top:20px;"><i class="fas fa-tags"></i> Subscription pricing</div>
+      <div class="pricing-cards" id="pricingCards">
+        ${Object.entries(SUBSCRIPTION_PRICES).map(([key, p]) => `
+          <div class="pricing-card ${key === 'pro' ? 'featured' : ''}" data-plan="${key}">
+            ${key === 'pro' ? '<div class="pc-badge">Most popular</div>' : ''}
+            <div class="pc-name">${p.name}</div>
+            <div class="pc-price">PKR ${p.price.toLocaleString()}<small>/${p.period}</small></div>
+            <div class="pc-desc">${p.features[0]}</div>
+            <ul class="pc-features">${p.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}</ul>
+            <button class="pc-btn ${key === 'pro' ? 'primary' : 'secondary'}" data-plan="${key}">Choose ${p.name}</button>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:12px; font-size:0.72rem; color:#64748b; text-align:center; line-height:1.5;">
+        All prices in PKR. Contact us on WhatsApp to activate your plan.<br>
+        <a href="https://wa.me/${CONTACT_PHONE}?text=Subscription%20enquiry" target="_blank" style="color:#25d366;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> ${CONTACT_PHONE}</a>
+      </div>
+    `;
+
+    // Pricing button handlers
+    host.querySelectorAll('.pc-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const plan = btn.dataset.plan;
+        const p = SUBSCRIPTION_PRICES[plan];
+        const msg = `Hi, I'd like to subscribe to the ${p.name} plan (PKR ${p.price.toLocaleString()}/${p.period}). My email: ${u.email}`;
+        window.open(`https://wa.me/${CONTACT_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+      });
+    });
+  }
+
+  // Expose scroll helper for banner button
+  window.scrollToPricing = function () {
+    const el = document.querySelector('#pricingCards');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  // ==================== ADMIN CUSTOMER PANEL ====================
+  function renderAdminCustomerPanel() {
+    const host = $('adminCustomerContent');
+    if (!host) return;
+    if (!currentUser || currentUser.role !== 'admin') {
+      host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Admin access required.</div>';
+      return;
+    }
+    if (!firebaseReady) {
+      host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Firebase not connected. Customer management requires cloud mode.</div>';
+      return;
+    }
+
+    host.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading customers…</div>';
+
+    fbDb.collection('users').orderBy('createdAt', 'desc').limit(200).get()
+      .then(snap => {
+        const users = [];
+        snap.forEach(d => users.push({ uid: d.id, ...d.data() }));
+        if (!users.length) {
+          host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">No customers found.</div>';
+          return;
+        }
+        host.innerHTML = `
+          <div style="overflow-x:auto;">
+            <table class="admin-customer-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Plan</th><th>Trial ends</th><th>Sub ends</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${users.map(u => {
+                  const state = computeSubscriptionState(u);
+                  return `<tr data-uid="${escapeHtml(u.uid)}">
+                    <td style="font-weight:700;">${escapeHtml(u.name || '—')}</td>
+                    <td style="font-size:0.7rem;word-break:break-all;">${escapeHtml(u.email || '—')}</td>
+                    <td><span class="status-dot ${state.cls}"></span>${escapeHtml(state.label)}</td>
+                    <td>${escapeHtml(u.subscription || 'trial')}</td>
+                    <td>${u.trialEnd ? new Date(u.trialEnd).toLocaleDateString() : '—'}</td>
+                    <td>${u.subscriptionEnd ? new Date(u.subscriptionEnd).toLocaleDateString() : '—'}</td>
+                    <td><div class="action-btns">
+                      ${u.status === 'pending' ? `<button class="approve" data-act="approve" data-uid="${escapeHtml(u.uid)}">Approve</button>` : ''}
+                      ${u.status === 'pending' ? `<button class="reject" data-act="reject" data-uid="${escapeHtml(u.uid)}">Reject</button>` : ''}
+                      ${u.status === 'active' ? `<button data-act="extend" data-uid="${escapeHtml(u.uid)}">+30d</button>` : ''}
+                      ${u.status === 'active' ? `<button data-act="expire" data-uid="${escapeHtml(u.uid)}">Expire</button>` : ''}
+                      ${u.status === 'expired' || u.status === 'rejected' ? `<button class="approve" data-act="approve" data-uid="${escapeHtml(u.uid)}">Reactivate</button>` : ''}
+                    </div></td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:12px; font-size:0.72rem; color:#64748b; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <span><i class="fas fa-info-circle"></i> Approve new signups, extend subscriptions by 30 days, or expire accounts.</span>
+            <button class="btn btn-outline btn-sm" id="refreshCustomersBtn" style="width:auto;padding:6px 12px;"><i class="fas fa-sync"></i> Refresh</button>
+          </div>
+        `;
+
+        $('refreshCustomersBtn')?.addEventListener('click', renderAdminCustomerPanel);
+
+        host.querySelectorAll('.action-btns button').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.dataset.uid;
+            const act = btn.dataset.act;
+            if (!uid || !act) return;
+            btn.disabled = true;
+            try {
+              const ref = fbDb.collection('users').doc(uid);
+              const now = Date.now();
+              if (act === 'approve') {
+                // Activate + start subscription 30 days (or keep trial if no sub set)
+                const snap = await ref.get();
+                const data = snap.data() || {};
+                const patch = { status: 'active', updatedAt: now };
+                if (!data.subscription || data.subscription === 'trial') {
+                  // keep trial if still valid, otherwise give 30 days starter
+                  if (data.trialEnd && now < data.trialEnd) { /* trial still valid */ }
+                  else { patch.subscription = 'starter'; patch.subscriptionStart = now; patch.subscriptionEnd = now + 30 * 24 * 60 * 60 * 1000; }
+                }
+                await ref.update(patch);
+                showToast('Customer approved', 'fa-check-circle');
+              } else if (act === 'reject') {
+                await ref.update({ status: 'rejected', subscription: 'expired', updatedAt: now });
+                showToast('Customer rejected', 'fa-user-slash');
+              } else if (act === 'extend') {
+                const snap = await ref.get();
+                const data = snap.data() || {};
+                const base = (data.subscriptionEnd && data.subscriptionEnd > now) ? data.subscriptionEnd : now;
+                await ref.update({ subscription: data.subscription && data.subscription !== 'trial' ? data.subscription : 'starter', subscriptionStart: data.subscriptionStart || now, subscriptionEnd: base + 30 * 24 * 60 * 60 * 1000, status: 'active', updatedAt: now });
+                showToast('Subscription extended by 30 days', 'fa-calendar-plus');
+              } else if (act === 'expire') {
+                await ref.update({ subscription: 'expired', subscriptionEnd: now - 1, updatedAt: now });
+                showToast('Subscription expired', 'fa-calendar-times');
+              }
+              renderAdminCustomerPanel();
+            } catch (err) {
+              console.error(err);
+              showToast('Action failed: ' + err.message, 'fa-exclamation-triangle');
+              btn.disabled = false;
+            }
+          });
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        host.innerHTML = `<div style="padding:20px;text-align:center;color:#c62828;">Could not load customers: ${escapeHtml(err.message)}</div>`;
+      });
+  }
 
   // ==================== HELP ====================
   const instructionsPanel = $('instructionsPanel'), helpFab = $('helpFab');
@@ -2473,7 +3205,6 @@
   }
   $('qrContent').addEventListener('change', updateCustomQrVisibility);
 
-  // Build the payload for a label given an explicit QR action type.
   function buildScanPayloadForAction(lbl, action) {
     const qrType = action || lbl.qrType || 'fullPrice';
     const includeImage = lbl.qrImg !== false;
@@ -2502,7 +3233,6 @@
     }
   }
 
-  // Original buildScanPayload kept for label rendering (respects each label's own qrType / website preference)
   function buildScanPayload(lbl) {
     if (lbl.format !== 'qr') return lbl.sku;
     return buildScanPayloadForAction(lbl, lbl.qrType || 'fullPrice');
@@ -2523,6 +3253,16 @@
   // ==================== GENERATE LABELS ====================
   $('labelForm').addEventListener('submit', (e) => {
     e.preventDefault();
+    if (currentUser && !isSubscriptionActive(currentUser) && currentUser.status !== 'pending') {
+      showToast('Subscription required. Please choose a plan.', 'fa-crown');
+      // Switch to customer tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="tabCustomer"]').classList.add('active');
+      $('tabCustomer').classList.add('active');
+      renderCustomerPanel();
+      return;
+    }
     const useData = $('useUploadedData').checked && uploadedData.length > 0;
     const design = readDesign();
     const base = {
@@ -3281,7 +4021,6 @@
     return s || fallback || 'label';
   }
 
-  // --- Direct canvas renderers (no DOM / html2canvas needed) ---
   function renderBarcodeToCanvas(value, format, height, barWidth, scale) {
     const s = scale || 1;
     const canvas = document.createElement('canvas');
@@ -3344,7 +4083,6 @@
     }
   }
 
-  // Draw text horizontally stretched to exactly fill targetWidth, centered on centerX.
   function drawStretchedText(ctx, text, centerX, targetWidth, baselineY, color, maxScale) {
     if (!text) return;
     const baseSize = 30;
@@ -3365,38 +4103,31 @@
     ctx.restore();
   }
 
-  // Build the full "code only" output canvas:
-  //   [ Product Name + Size (centered top, auto-fit) ]
-  //   [ Barcode / QR  (middle)                       ]
-  //   [ Number(s)     (directly beneath each code)   ]
   function buildCodeDownloadCanvas(lbl, codeType, qrScanAction) {
-    const SCALE = 4; // render at 4x for crisp print quality
+    const SCALE = 4;
 
     const bh = getLabelBarcodeHeight(lbl);
     const qs = getLabelQrSize(lbl);
     const bwid = getLabelBarWidth(lbl);
-    // Use the chosen QR scan action (from the dropdown), falling back to the label's own setting
     const action = qrScanAction || lbl.qrType || 'fullPrice';
     const payload = buildScanPayloadForAction(lbl, action);
     const barcodeValue = lbl.sku || ' ';
     const barcodeFormat = lbl.format === 'qr' ? 'CODE128' : (lbl.format || 'CODE128');
 
-    // Render codes at SCALE resolution
     const barcodeCanvas = (codeType === 'barcode' || codeType === 'both')
       ? renderBarcodeToCanvas(barcodeValue, barcodeFormat, bh, bwid, SCALE) : null;
     const qrCanvas = (codeType === 'qrcode' || codeType === 'both')
       ? renderQRToCanvas(payload, qs, SCALE) : null;
 
-    // Logical (1x) sizes
     const bcW = barcodeCanvas ? barcodeCanvas.width / SCALE : 0;
     const bcH = barcodeCanvas ? barcodeCanvas.height / SCALE : 0;
     const qrW = qrCanvas ? qrCanvas.width / SCALE : 0;
     const qrH = qrCanvas ? qrCanvas.height / SCALE : 0;
 
     const pad = 16;
-    const headerPx = 52;   // product-name band
-    const numberPx = 40;   // human-readable number band
-    const gap = 24;        // gap between barcode and QR (both mode)
+    const headerPx = 52;
+    const numberPx = 40;
+    const gap = 24;
 
     let contentW, contentH;
     if (codeType === 'barcode') {
@@ -3421,7 +4152,6 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, outW, outH);
 
-    // --- Product name + size (top, centered, auto-fit to width) ---
     const productName = (lbl.product || lbl.brand || lbl.sku || 'Product').toString();
     const sizeText = (lbl.size || '').toString().trim();
     const separator = '  •  ';
@@ -3434,14 +4164,12 @@
     ctx.textBaseline = 'middle';
     ctx.font = `bold ${fontSize}px Arial, Helvetica, sans-serif`;
 
-    // Reduce font size until the full text fits (or until minFontSize)
     while (ctx.measureText(headerText).width > maxTextW && fontSize > minFontSize) {
       fontSize -= 1;
       ctx.font = `bold ${fontSize}px Arial, Helvetica, sans-serif`;
     }
 
     let finalText = headerText;
-    // If still too wide at min font size, truncate the product name (keep size visible)
     if (ctx.measureText(finalText).width > maxTextW) {
       const sizeSuffix = sizeText ? separator + sizeText : '';
       let truncated = productName;
@@ -3454,7 +4182,6 @@
     ctx.fillStyle = '#1e2b3c';
     ctx.fillText(finalText, outW / 2, pad + headerPx / 2);
 
-    // --- Codes (middle), vertically centered in the content band ---
     const codeBandY = pad + headerPx;
     const numberY = codeBandY + contentH + numberPx / 2;
     const skuText = (lbl.sku || '').toString();
@@ -3470,7 +4197,6 @@
       ctx.drawImage(qrCanvas, qx, qy, qrW, qrH);
       drawStretchedText(ctx, skuText, qx + qrW / 2, qrW, numberY);
     } else {
-      // Both: barcode on the left, QR on the right
       const bx = pad;
       const qx = pad + bcW + gap;
       const by = codeBandY + (contentH - bcH) / 2;
@@ -3484,16 +4210,17 @@
     return out;
   }
 
-  // Helper: pick which QR scan action to use based on code type
   function getQrScanActionFor(codeType) {
     if (codeType === 'both') {
       return $('qrScanActionBoth') ? $('qrScanActionBoth').value : 'website';
     }
-    // barcode-only downloads don't use QR, but use qrcode action as fallback
     return $('qrScanAction') ? $('qrScanAction').value : 'website';
   }
 
-  // Human-readable label for a scan action value
+  function getQrScanActionForVector() {
+    return $('qrScanActionVector') ? $('qrScanActionVector').value : 'website';
+  }
+
   function qrScanActionLabel(v) {
     const map = {
       website: 'Product Website URL',
@@ -3531,7 +4258,7 @@
         const canvas = buildCodeDownloadCanvas(lbl, codeType, qrScanAction);
         const dataUrl = canvas.toDataURL('image/png');
 
-        const pxPerInch = 96 * 4; // matches the 4x render scale
+        const pxPerInch = 96 * 4;
         let wIn = canvas.width / pxPerInch;
         let hIn = canvas.height / pxPerInch;
 
@@ -3617,14 +4344,539 @@
     }
   }
 
+  // ==================== VECTOR EXPORTS (AI / EPS) ====================
+  function buildBarcodeSVG(lbl, barcodeValue, barcodeFormat, height, barWidth) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+
+    const bars = [];
+    try {
+      const tempSvg = document.createElementNS(svgNS, 'svg');
+      JsBarcode(tempSvg, barcodeValue, {
+        format: barcodeFormat,
+        displayValue: false,
+        height: height,
+        margin: 0,
+        lineColor: '#000000',
+        background: 'transparent'
+      });
+
+      const rects = tempSvg.querySelectorAll('rect');
+      rects.forEach(rect => {
+        bars.push({
+          x: parseFloat(rect.getAttribute('x')) || 0,
+          y: parseFloat(rect.getAttribute('y')) || 0,
+          width: parseFloat(rect.getAttribute('width')) || 0,
+          height: parseFloat(rect.getAttribute('height')) || 0
+        });
+      });
+    } catch (e) {
+      console.error('Barcode SVG generation error:', e);
+    }
+
+    if (bars.length === 0) {
+      const text = document.createElementNS(svgNS, 'text');
+      text.setAttribute('x', '50%');
+      text.setAttribute('y', '50%');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-family', 'Arial');
+      text.setAttribute('font-size', '12');
+      text.setAttribute('fill', '#000');
+      text.textContent = 'Invalid ' + barcodeFormat;
+      svg.appendChild(text);
+      svg.setAttribute('width', '200');
+      svg.setAttribute('height', '60');
+      svg.setAttribute('viewBox', '0 0 200 60');
+      svg.setAttribute('xmlns', svgNS);
+      return svg;
+    }
+
+    let maxX = 0;
+    bars.forEach(bar => {
+      maxX = Math.max(maxX, bar.x + bar.width);
+    });
+
+    const svgWidth = maxX + 10;
+    const svgHeight = height + 20;
+
+    svg.setAttribute('width', svgWidth);
+    svg.setAttribute('height', svgHeight);
+    svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+    svg.setAttribute('xmlns', svgNS);
+
+    const bg = document.createElementNS(svgNS, 'rect');
+    bg.setAttribute('x', '0');
+    bg.setAttribute('y', '0');
+    bg.setAttribute('width', '100%');
+    bg.setAttribute('height', '100%');
+    bg.setAttribute('fill', '#ffffff');
+    svg.appendChild(bg);
+
+    bars.forEach(bar => {
+      const rect = document.createElementNS(svgNS, 'rect');
+      rect.setAttribute('x', bar.x + 5);
+      rect.setAttribute('y', bar.y + 5);
+      rect.setAttribute('width', bar.width);
+      rect.setAttribute('height', bar.height);
+      rect.setAttribute('fill', '#000000');
+      svg.appendChild(rect);
+    });
+
+    const text = document.createElementNS(svgNS, 'text');
+    text.setAttribute('x', svgWidth / 2);
+    text.setAttribute('y', height + 16);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-family', 'Courier New, monospace');
+    text.setAttribute('font-size', '10');
+    text.setAttribute('font-weight', 'bold');
+    text.setAttribute('fill', '#000000');
+    text.textContent = barcodeValue;
+    svg.appendChild(text);
+
+    return svg;
+  }
+
+  function buildQRSVG(value, size) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+
+    const canvas = document.createElement('canvas');
+    const px = Math.max(60, Math.round(size || DEFAULT_QR_SIZE));
+    try {
+      new QRious({
+        element: canvas,
+        value: value || ' ',
+        size: px,
+        level: (value || '').length > 60 ? 'M' : 'H',
+        background: '#ffffff',
+        foreground: '#000000'
+      });
+    } catch (e) {
+      canvas.width = px;
+      canvas.height = px;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, px, px);
+      ctx.fillStyle = '#000000';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('QR Error', px / 2, px / 2);
+    }
+
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    svg.setAttribute('width', canvas.width);
+    svg.setAttribute('height', canvas.height);
+    svg.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
+    svg.setAttribute('xmlns', svgNS);
+
+    const bg = document.createElementNS(svgNS, 'rect');
+    bg.setAttribute('x', '0');
+    bg.setAttribute('y', '0');
+    bg.setAttribute('width', '100%');
+    bg.setAttribute('height', '100%');
+    bg.setAttribute('fill', '#ffffff');
+    svg.appendChild(bg);
+
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const idx = (y * canvas.width + x) * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        if (r < 128 && g < 128 && b < 128) {
+          const rect = document.createElementNS(svgNS, 'rect');
+          rect.setAttribute('x', x);
+          rect.setAttribute('y', y);
+          rect.setAttribute('width', 1);
+          rect.setAttribute('height', 1);
+          rect.setAttribute('fill', '#000000');
+          svg.appendChild(rect);
+        }
+      }
+    }
+
+    return svg;
+  }
+
+  function svgToEPS(svgElement, width, height) {
+    let eps = '';
+    eps += '%!PS-Adobe-3.0 EPSF-3.0\n';
+    eps += `%%BoundingBox: 0 0 ${Math.round(width)} ${Math.round(height)}\n`;
+    eps += '%%Creator: LynkKar Pro Label Studio\n';
+    eps += '%%Title: Barcode Vector Export\n';
+    eps += '%%CreationDate: ' + new Date().toISOString() + '\n';
+    eps += '%%EndComments\n';
+    eps += '%%BeginProlog\n';
+    eps += '/m { moveto } bind def\n';
+    eps += '/l { lineto } bind def\n';
+    eps += '/r { rectfill } bind def\n';
+    eps += '%%EndProlog\n';
+    eps += '%%Page: 1 1\n';
+    eps += 'gsave\n';
+    eps += '0 0 0 setrgbcolor\n';
+
+    const elements = svgElement.querySelectorAll('rect, text');
+    elements.forEach(el => {
+      if (el.tagName === 'rect') {
+        const x = parseFloat(el.getAttribute('x')) || 0;
+        const y = parseFloat(el.getAttribute('y')) || 0;
+        const w = parseFloat(el.getAttribute('width')) || 0;
+        const h = parseFloat(el.getAttribute('height')) || 0;
+        const fill = el.getAttribute('fill');
+
+        if (fill === '#000000' || fill === '#000' || fill === 'black') {
+          eps += `${x} ${height - y - h} ${w} ${h} r\n`;
+        }
+      } else if (el.tagName === 'text') {
+        const x = parseFloat(el.getAttribute('x')) || 0;
+        const y = parseFloat(el.getAttribute('y')) || 0;
+        const text = el.textContent || '';
+        const fontSize = parseFloat(el.getAttribute('font-size')) || 10;
+
+        if (text && text !== 'Invalid') {
+          eps += '0 0 0 setrgbcolor\n';
+          eps += `/Helvetica findfont ${fontSize} scalefont setfont\n`;
+          eps += `${x} ${height - y} moveto\n`;
+          eps += `(${text.replace(/[()\\]/g, '\\$&')}) show\n`;
+        }
+      }
+    });
+
+    eps += 'grestore\n';
+    eps += '%%EOF\n';
+
+    return eps;
+  }
+
+  function buildAIFile(svgElement, width, height) {
+    let pdf = '';
+    pdf += '%PDF-1.4\n';
+    pdf += '%\u00E2\u00E3\u00CF\u00D3\n';
+
+    pdf += '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
+    pdf += '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
+    pdf += `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${Math.round(width)} ${Math.round(height)}] /Resources << /Font << /F1 6 0 R >> >> /Contents 4 0 R >>\nendobj\n`;
+
+    const content = [];
+    content.push('q');
+    content.push('1 1 1 rg');
+    content.push(`0 0 ${Math.round(width)} ${Math.round(height)} re f`);
+    content.push('Q');
+
+    const rects = svgElement.querySelectorAll('rect');
+    rects.forEach(rect => {
+      const x = parseFloat(rect.getAttribute('x')) || 0;
+      const y = parseFloat(rect.getAttribute('y')) || 0;
+      const w = parseFloat(rect.getAttribute('width')) || 0;
+      const h = parseFloat(rect.getAttribute('height')) || 0;
+      const fill = rect.getAttribute('fill');
+
+      if (fill === '#000000' || fill === '#000' || fill === 'black') {
+        content.push('q');
+        content.push('0 0 0 rg');
+        content.push(`${x} ${height - y - h} ${w} ${h} re f`);
+        content.push('Q');
+      }
+    });
+
+    const texts = svgElement.querySelectorAll('text');
+    texts.forEach(textEl => {
+      const x = parseFloat(textEl.getAttribute('x')) || 0;
+      const y = parseFloat(textEl.getAttribute('y')) || 0;
+      const text = textEl.textContent || '';
+      const fontSize = parseFloat(textEl.getAttribute('font-size')) || 10;
+      const anchor = textEl.getAttribute('text-anchor') || 'start';
+
+      if (!text.trim()) return;
+
+      let textX = x;
+      if (anchor === 'middle') {
+        textX = x - (text.length * fontSize * 0.5);
+      } else if (anchor === 'end') {
+        textX = x - (text.length * fontSize * 0.5);
+      }
+
+      const escapedText = text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+      content.push('BT');
+      content.push('/F1 ' + fontSize + ' Tf');
+      content.push('0 0 0 rg');
+      content.push(`${textX} ${height - y} Td`);
+      content.push(`(${escapedText}) Tj`);
+      content.push('ET');
+    });
+
+    const contentStr = content.join('\n');
+
+    pdf += `4 0 obj\n<< /Length ${contentStr.length} >>\nstream\n${contentStr}\nendstream\nendobj\n`;
+    pdf += `5 0 obj\n<< /Creator (LynkKar Pro Label Studio) /Producer (LynkKar Pro) >>\nendobj\n`;
+    pdf += `6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n`;
+
+    const xrefOffset = pdf.length;
+    pdf += 'xref\n';
+    pdf += '0 7\n';
+    pdf += '0000000000 65535 f \n';
+    pdf += '0000000009 00000 n \n';
+    pdf += '0000000058 00000 n \n';
+    pdf += '0000000115 00000 n \n';
+    pdf += '0000000246 00000 n \n';
+    pdf += '0000000000 65535 f \n';
+    pdf += '0000000000 65535 f \n';
+    pdf += 'trailer\n<< /Size 7 /Root 1 0 R >>\n';
+    pdf += `startxref\n${xrefOffset}\n%%EOF`;
+
+    return pdf;
+  }
+
+  async function downloadAllCodesVector(codeType, format) {
+    if (!labelsList.length) return showToast('Generate labels first', 'fa-exclamation-circle');
+    if (typeof JSZip === 'undefined') return showToast('ZIP library not loaded', 'fa-exclamation-triangle');
+
+    const qrScanAction = getQrScanActionForVector();
+
+    loadingMsg.innerText = `Rendering ${format.toUpperCase()} files...`;
+    progressBar.style.width = '0';
+    loadingOverlay.style.display = 'flex';
+    await sleep(30);
+
+    try {
+      const zip = new JSZip();
+      const n = labelsList.length;
+      const formatLabel = format === 'ai' ? 'AI' : 'EPS';
+      const folderName = codeType === 'barcode' ? 'Barcodes' : codeType === 'qrcode' ? 'QRCodes' : 'Barcodes_QR';
+      const folder = zip.folder(`LynkKar_${formatLabel}_${folderName}_${Date.now()}`);
+
+      for (let i = 0; i < n; i++) {
+        const lbl = labelsList[i];
+        loadingMsg.innerText = `Rendering ${formatLabel} ${i + 1} of ${n}...`;
+        progressBar.style.width = Math.round(((i + 1) / n) * 100) + '%';
+
+        const bh = getLabelBarcodeHeight(lbl);
+        const qs = getLabelQrSize(lbl);
+        const bwid = getLabelBarWidth(lbl);
+        const action = qrScanAction || lbl.qrType || 'fullPrice';
+        const payload = buildScanPayloadForAction(lbl, action);
+        const barcodeValue = lbl.sku || ' ';
+        const barcodeFormat = lbl.format === 'qr' ? 'CODE128' : (lbl.format || 'CODE128');
+
+        const productName = (lbl.product || lbl.brand || lbl.sku || 'Product').toString();
+        const sizeText = (lbl.size || '').toString().trim();
+        const separator = sizeText ? '  •  ' : '';
+        const headerText = productName + separator + sizeText;
+
+        const pad = 10;
+        const headerHeight = 28;
+        const skuHeight = 20;
+
+        let svgElement, outWidth, outHeight;
+
+        if (codeType === 'barcode') {
+          const barcodeSVG = buildBarcodeSVG(lbl, barcodeValue, barcodeFormat, bh, bwid);
+          const bcW = parseFloat(barcodeSVG.getAttribute('width')) || 200;
+          const bcH = parseFloat(barcodeSVG.getAttribute('height')) || 60;
+
+          outWidth = bcW + pad * 2;
+          outHeight = headerHeight + bcH + skuHeight + pad * 2;
+
+          const svgNS = 'http://www.w3.org/2000/svg';
+          svgElement = document.createElementNS(svgNS, 'svg');
+          svgElement.setAttribute('width', outWidth);
+          svgElement.setAttribute('height', outHeight);
+          svgElement.setAttribute('viewBox', `0 0 ${outWidth} ${outHeight}`);
+          svgElement.setAttribute('xmlns', svgNS);
+
+          const bg = document.createElementNS(svgNS, 'rect');
+          bg.setAttribute('x', '0');
+          bg.setAttribute('y', '0');
+          bg.setAttribute('width', '100%');
+          bg.setAttribute('height', '100%');
+          bg.setAttribute('fill', '#ffffff');
+          svgElement.appendChild(bg);
+
+          const headerTextEl = document.createElementNS(svgNS, 'text');
+          headerTextEl.setAttribute('x', outWidth / 2);
+          headerTextEl.setAttribute('y', pad + 16);
+          headerTextEl.setAttribute('text-anchor', 'middle');
+          headerTextEl.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+          headerTextEl.setAttribute('font-size', '14');
+          headerTextEl.setAttribute('font-weight', 'bold');
+          headerTextEl.setAttribute('fill', '#000000');
+          headerTextEl.textContent = headerText;
+          svgElement.appendChild(headerTextEl);
+
+          const bcGroup = document.createElementNS(svgNS, 'g');
+          bcGroup.setAttribute('transform', `translate(${pad}, ${headerHeight + pad})`);
+          bcGroup.innerHTML = barcodeSVG.innerHTML;
+          svgElement.appendChild(bcGroup);
+
+          const skuEl = document.createElementNS(svgNS, 'text');
+          skuEl.setAttribute('x', outWidth / 2);
+          skuEl.setAttribute('y', outHeight - pad);
+          skuEl.setAttribute('text-anchor', 'middle');
+          skuEl.setAttribute('font-family', 'Courier New, monospace');
+          skuEl.setAttribute('font-size', '10');
+          skuEl.setAttribute('font-weight', 'bold');
+          skuEl.setAttribute('fill', '#000000');
+          skuEl.textContent = barcodeValue;
+          svgElement.appendChild(skuEl);
+
+        } else if (codeType === 'qrcode') {
+          const qrSVG = buildQRSVG(payload, qs);
+          const qrW = parseFloat(qrSVG.getAttribute('width')) || 100;
+          const qrH = parseFloat(qrSVG.getAttribute('height')) || 100;
+
+          outWidth = qrW + pad * 2;
+          outHeight = headerHeight + qrH + skuHeight + pad * 2;
+
+          const svgNS = 'http://www.w3.org/2000/svg';
+          svgElement = document.createElementNS(svgNS, 'svg');
+          svgElement.setAttribute('width', outWidth);
+          svgElement.setAttribute('height', outHeight);
+          svgElement.setAttribute('viewBox', `0 0 ${outWidth} ${outHeight}`);
+          svgElement.setAttribute('xmlns', svgNS);
+
+          const bg = document.createElementNS(svgNS, 'rect');
+          bg.setAttribute('x', '0');
+          bg.setAttribute('y', '0');
+          bg.setAttribute('width', '100%');
+          bg.setAttribute('height', '100%');
+          bg.setAttribute('fill', '#ffffff');
+          svgElement.appendChild(bg);
+
+          const headerTextEl = document.createElementNS(svgNS, 'text');
+          headerTextEl.setAttribute('x', outWidth / 2);
+          headerTextEl.setAttribute('y', pad + 16);
+          headerTextEl.setAttribute('text-anchor', 'middle');
+          headerTextEl.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+          headerTextEl.setAttribute('font-size', '14');
+          headerTextEl.setAttribute('font-weight', 'bold');
+          headerTextEl.setAttribute('fill', '#000000');
+          headerTextEl.textContent = headerText;
+          svgElement.appendChild(headerTextEl);
+
+          const qrGroup = document.createElementNS(svgNS, 'g');
+          qrGroup.setAttribute('transform', `translate(${pad}, ${headerHeight + pad})`);
+          qrGroup.innerHTML = qrSVG.innerHTML;
+          svgElement.appendChild(qrGroup);
+
+          const skuEl = document.createElementNS(svgNS, 'text');
+          skuEl.setAttribute('x', outWidth / 2);
+          skuEl.setAttribute('y', outHeight - pad);
+          skuEl.setAttribute('text-anchor', 'middle');
+          skuEl.setAttribute('font-family', 'Courier New, monospace');
+          skuEl.setAttribute('font-size', '10');
+          skuEl.setAttribute('font-weight', 'bold');
+          skuEl.setAttribute('fill', '#000000');
+          skuEl.textContent = barcodeValue;
+          svgElement.appendChild(skuEl);
+
+        } else {
+          const barcodeSVG = buildBarcodeSVG(lbl, barcodeValue, barcodeFormat, bh, bwid);
+          const qrSVG = buildQRSVG(payload, qs);
+
+          const bcW = parseFloat(barcodeSVG.getAttribute('width')) || 200;
+          const bcH = parseFloat(barcodeSVG.getAttribute('height')) || 60;
+          const qrW = parseFloat(qrSVG.getAttribute('width')) || 100;
+          const qrH = parseFloat(qrSVG.getAttribute('height')) || 100;
+
+          const gap = 20;
+          outWidth = bcW + gap + qrW + pad * 2;
+          outHeight = headerHeight + Math.max(bcH, qrH) + skuHeight + pad * 2;
+
+          const svgNS = 'http://www.w3.org/2000/svg';
+          svgElement = document.createElementNS(svgNS, 'svg');
+          svgElement.setAttribute('width', outWidth);
+          svgElement.setAttribute('height', outHeight);
+          svgElement.setAttribute('viewBox', `0 0 ${outWidth} ${outHeight}`);
+          svgElement.setAttribute('xmlns', svgNS);
+
+          const bg = document.createElementNS(svgNS, 'rect');
+          bg.setAttribute('x', '0');
+          bg.setAttribute('y', '0');
+          bg.setAttribute('width', '100%');
+          bg.setAttribute('height', '100%');
+          bg.setAttribute('fill', '#ffffff');
+          svgElement.appendChild(bg);
+
+          const headerTextEl = document.createElementNS(svgNS, 'text');
+          headerTextEl.setAttribute('x', outWidth / 2);
+          headerTextEl.setAttribute('y', pad + 16);
+          headerTextEl.setAttribute('text-anchor', 'middle');
+          headerTextEl.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+          headerTextEl.setAttribute('font-size', '14');
+          headerTextEl.setAttribute('font-weight', 'bold');
+          headerTextEl.setAttribute('fill', '#000000');
+          headerTextEl.textContent = headerText;
+          svgElement.appendChild(headerTextEl);
+
+          const bcGroup = document.createElementNS(svgNS, 'g');
+          bcGroup.setAttribute('transform', `translate(${pad}, ${headerHeight + pad})`);
+          bcGroup.innerHTML = barcodeSVG.innerHTML;
+          svgElement.appendChild(bcGroup);
+
+          const qrGroup = document.createElementNS(svgNS, 'g');
+          qrGroup.setAttribute('transform', `translate(${pad + bcW + gap}, ${headerHeight + pad})`);
+          qrGroup.innerHTML = qrSVG.innerHTML;
+          svgElement.appendChild(qrGroup);
+
+          const skuEl = document.createElementNS(svgNS, 'text');
+          skuEl.setAttribute('x', outWidth / 2);
+          skuEl.setAttribute('y', outHeight - pad);
+          skuEl.setAttribute('text-anchor', 'middle');
+          skuEl.setAttribute('font-family', 'Courier New, monospace');
+          skuEl.setAttribute('font-size', '10');
+          skuEl.setAttribute('font-weight', 'bold');
+          skuEl.setAttribute('fill', '#000000');
+          skuEl.textContent = barcodeValue;
+          svgElement.appendChild(skuEl);
+        }
+
+        const productNameSafe = (lbl.product || lbl.brand || lbl.sku || 'Product').toString();
+        const baseName = `${String(i + 1).padStart(3, '0')}_${safeFileName(productNameSafe, 'Product')}_${safeFileName(lbl.sku, 'SKU')}`;
+
+        if (format === 'eps') {
+          const epsContent = svgToEPS(svgElement, outWidth, outHeight);
+          folder.file(baseName + '.eps', epsContent);
+        } else {
+          const aiContent = buildAIFile(svgElement, outWidth, outHeight);
+          folder.file(baseName + '.ai', aiContent);
+        }
+
+        await sleep(0);
+      }
+
+      loadingMsg.innerText = 'Zipping files...';
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `LynkKar_${formatLabel}_${folderName}_${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const scanMsg = (codeType === 'both' || codeType === 'qrcode')
+        ? ` — QR opens: ${qrScanActionLabel(qrScanAction)}`
+        : '';
+      showToast(`${formatLabel} ZIP saved — ${n} file(s)${scanMsg}`, 'fa-file-archive');
+    } catch (err) {
+      console.error(err);
+      showToast(`Error creating ${format.toUpperCase()} ZIP: ` + err.message, 'fa-exclamation-triangle');
+    } finally {
+      loadingOverlay.style.display = 'none';
+    }
+  }
+
   codesDropdown.querySelectorAll('.dd-item').forEach(item => {
     item.addEventListener('click', async (e) => {
       e.stopPropagation();
       codesDropdown.style.display = 'none';
       const codeType = item.dataset.code;
       const fileType = item.dataset.type;
+
       if (fileType === 'pdf') await downloadAllCodesPdf(codeType);
-      else await downloadAllCodesJpgZip(codeType);
+      else if (fileType === 'jpg') await downloadAllCodesJpgZip(codeType);
+      else if (fileType === 'ai') await downloadAllCodesVector(codeType, 'ai');
+      else if (fileType === 'eps') await downloadAllCodesVector(codeType, 'eps');
     });
   });
 
@@ -3657,17 +4909,37 @@
 
   // ==================== INIT ====================
   (async function init() {
-    await ensureUsers();
+    await ensureLocalAdmin();
     restoreSettings();
     applyTextSizes();
     labelsList = lsGet(LABELS_KEY, []);
     if (!Array.isArray(labelsList)) labelsList = [];
-    labelsList.forEach((l, i) => { if (!l.id) l.id = 'lbl_init_' + i + '_' + Math.random().toString(36).slice(2, 7); });
+    labelsList.forEach((l, i) => { if (!l.id) l.id = 'init_' + i + '_' + Math.random().toString(36).slice(2, 7); });
     renderImagePreview();
     updateSelectionUI();
-    const s = sessionStorage.getItem(SESSION_KEY);
-    if (s && getUsers().find(u => u.username === s)) showDashboard();
-    else { sessionStorage.removeItem(SESSION_KEY); showLogin(); setTimeout(() => loginUser.focus(), 300); }
+    renderCustomerPanel();
+
+    // Firebase auth listener
+    initAuthListener();
+
+    // If firebase isn't ready, fall back to local session
+    if (!firebaseReady) {
+      setFirebaseStatus(false);
+      const s = sessionStorage.getItem(SESSION_KEY);
+      if (s) {
+        const local = getLocalUsers().find(u => (u.username || u.email) === s);
+        if (local) {
+          currentUser = { uid: 'local_' + local.username, email: local.email || local.username, name: local.username, role: local.role, status: 'active', subscription: 'business', trialStart: null, trialEnd: null, subscriptionStart: Date.now(), subscriptionEnd: Date.now() + 365 * 24 * 60 * 60 * 1000, _local: true };
+          showDashboard();
+          return;
+        }
+      }
+      showLogin();
+      setTimeout(() => loginEmail.focus(), 300);
+    } else {
+      setFirebaseStatus(true);
+      // auth listener will handle routing
+    }
   })();
 </script>
 </body>
