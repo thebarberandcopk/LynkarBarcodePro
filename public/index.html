@@ -1195,6 +1195,14 @@
     .cloud-sync-badge.syncing { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
     .cloud-sync-badge.offline { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
     .cloud-sync-badge i { font-size:.65rem; }
+    .cloud-sync-badge.connected { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+    .cloud-sync-badge.error { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+    #codesDropdown .dd-item-featured { background:#f0fdf4; font-weight:800; border-left:3px solid #16a34a; }
+    #codesDropdown .dd-item-featured:hover { background:#dcfce7; }
+    .login-processing { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(15,23,42,.42); backdrop-filter:blur(4px); }
+    .login-processing.show { display:flex; }
+    .login-processing-card { background:#fff; border-radius:16px; padding:24px 30px; box-shadow:0 20px 60px rgba(15,23,42,.25); text-align:center; min-width:260px; }
+    .login-processing-card .spinner { font-size:28px; color:var(--secondary); margin-bottom:10px; }
   </style>
 </head>
 <body>
@@ -1894,9 +1902,9 @@
             <button class="dd-item" data-code="both" data-type="jpg"><i class="fas fa-file-image" style="color:#2e7d32;"></i> Barcode + QR as JPG (ZIP)</button>
 
             <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#166534; background:#ecfdf5; border-bottom:1px solid #bbf7d0; border-top:1px solid #e2e8f0;">Vector PDF</div>
+            <button class="dd-item dd-item-featured" data-code="both" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> Download QR &amp; Barcode as PDF (Vector)</button>
             <button class="dd-item" data-code="barcode" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> All Barcodes as Vector PDF</button>
             <button class="dd-item" data-code="qrcode" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> All QR Codes as Vector PDF</button>
-            <button class="dd-item" data-code="both" data-type="pdf-vector"><i class="fas fa-file-pdf" style="color:#166534;"></i> Barcode + QR as Vector PDF</button>
 
             <div style="padding:6px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:#e65100; background:#fff3e0; border-bottom:1px solid #ffe0b2; border-top:1px solid #e2e8f0;">Vector Formats (Adobe Illustrator)</div>
             <div class="qr-scan-row-vector">
@@ -2222,6 +2230,8 @@
     </div>
   </div>
 </div>
+
+<div id="loginProcessing" class="login-processing" aria-hidden="true"><div class="login-processing-card"><div class="spinner"><i class="fas fa-circle-notch fa-spin"></i></div><strong>Signing you in…</strong><div style="margin-top:6px;font-size:.78rem;color:#64748b">Verifying your account and loading workspace</div></div></div>
 
 <div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
 
@@ -2621,6 +2631,12 @@
     loginAuthModal.setAttribute('aria-hidden','false');
     setTimeout(() => loginEmail?.focus(), 80);
   }
+  function setLoginProcessing(show) {
+    const el = $('loginProcessing');
+    if (!el) return;
+    el.classList.toggle('show', !!show);
+    el.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
   function closeLogin() {
     if (!loginAuthModal) return;
     loginAuthModal.classList.remove('show');
@@ -2646,47 +2662,32 @@
   }
 
   async function doLogin(email, password) {
-    if (firebaseReady) {
-      try {
-        const cred = await fbAuth.signInWithEmailAndPassword(email, password);
-        // Auth state listener will handle the rest
-        return { ok: true };
-      } catch (err) {
-        return { ok: false, error: err.message };
-      }
-    } else {
-      // Offline mode: local users only
-      const localUsers = getLocalUsers();
-      const local = localUsers.find(u => (u.email || u.username) === email);
-      if (!local) return { ok: false, error: 'No account found' };
-      const h = await hashPassword(password, local.salt);
-      if (h !== local.hash) return { ok: false, error: 'Incorrect password' };
-      return { ok: false, error: 'Firebase is required. Please try again when Firebase is connected.' };
+    if (!firebaseReady) return { ok: false, error: 'Firebase connection is required for secure sign-in.' };
+    try {
+      await fbAuth.signInWithEmailAndPassword(email, password);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
     }
   }
 
   $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (loginBtn.disabled) return;
     loginBtn.disabled = true;
+    setLoginProcessing(true);
     const email = loginEmail.value.trim();
     const pass = loginPass.value;
     const res = await doLogin(email, pass);
-    loginBtn.disabled = false;
-    if (res.ok) {
-      if (res.local) {
-        // local fallback: show dashboard directly
-        loginError.classList.remove('show');
-        showDashboard();
-        showToast('Welcome back, ' + (currentUser.name || 'Admin') + '!', 'fa-user-check');
-      } else {
-        // Firebase auth state listener will verify the account and open the dashboard.
-        loginError.classList.remove('show');
-        closeLogin();
-      }
-    } else {
+    if (!res.ok) {
+      setLoginProcessing(false);
+      loginBtn.disabled = false;
       loginErrorMsg.innerText = 'Login failed: ' + (res.error || 'Unknown error');
       loginError.classList.add('show');
+      return;
     }
+    // Auth state listener verifies the account and opens the dashboard.
+    loginError.classList.remove('show');
   });
 
   $('togglePassBtn').addEventListener('click', () => {
@@ -2786,40 +2787,73 @@
     setFirebaseStatus(true);
     fbAuth.onAuthStateChanged(async (user) => {
       if (userListenerUnsub) { userListenerUnsub(); userListenerUnsub = null; }
-      if (!user) { currentUser = null; stopSharedLabelsSync(); showLogin(); return; }
+      if (!user) {
+        currentUser = null;
+        stopSharedLabelsSync();
+        setLoginProcessing(false);
+        showLogin();
+        return;
+      }
+
+      // Existing accounts already have a users/{uid} record, so use a single
+      // read here instead of the previous duplicate read + immediate snapshot read.
       try {
-        const doc = await ensureUserDoc(user.uid, { email: user.email, name: user.displayName || user.email });
-        if (!doc) { await denyAndSignOut('Account unavailable', 'Your account profile could not be loaded.'); return; }
+        const doc = await loadUserDoc(user.uid);
+        if (!doc) {
+          await denyAndSignOut('Account unavailable', 'Your account profile could not be loaded.');
+          return;
+        }
+
         currentUser = { uid: user.uid, email: user.email, name: user.displayName || doc.name || user.email, ...doc };
+        updateUserBadge();
+        renderCustomerPanel();
+        applyPlanRestrictions();
+
+        const state = computeSubscriptionState(currentUser);
+        if (currentUser.role !== 'admin' && !state.canUse) {
+          setLoginProcessing(false);
+          if (currentUser.status === 'pending') await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
+          else await denyAndSignOut(state.label, state.text);
+          return;
+        }
+
+        // Open the workspace as soon as account verification succeeds.
+        loadLocalLabelsForCurrentUser();
+        closeLogin();
+        setLoginProcessing(false);
+        showDashboard();
+        setCloudSyncStatus('syncing', 'Connecting…');
+
+        // Keep the profile live for admin approvals, expiry and plan changes.
         userListenerUnsub = fbDb.collection('users').doc(user.uid).onSnapshot(async snap => {
           if (!snap.exists) return;
           currentUser = { uid: user.uid, email: user.email, name: user.displayName || snap.data().name || user.email, ...snap.data() };
-          updateUserBadge(); renderCustomerPanel(); applyPlanRestrictions();
-          if (currentUser.role === 'admin') { $('adminTabBtn').style.display = ''; renderAdminCustomerPanel(); }
-          else $('adminTabBtn').style.display = 'none';
-          const state = computeSubscriptionState(currentUser);
-          if (currentUser.role === 'admin' || state.canUse) {
-            loadLocalLabelsForCurrentUser();
-            startSharedLabelsSync();
-            closeLogin();
-            if (dashboardApp.classList.contains('hidden')) showDashboard();
-          } else if (currentUser.status === 'pending') {
-            await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
-          } else {
-            await denyAndSignOut(state.label, state.text);
+          updateUserBadge();
+          renderCustomerPanel();
+          applyPlanRestrictions();
+          const nextState = computeSubscriptionState(currentUser);
+          if (currentUser.role !== 'admin' && !nextState.canUse) {
+            await denyAndSignOut(nextState.label, nextState.text);
+            return;
           }
+          if (!userLabelsUnsub) startSharedLabelsSync();
+        }, err => {
+          console.error('User profile listener:', err);
+          // Profile listener failure should not falsely claim the whole cloud is offline.
+          if (!navigator.onLine) setCloudSyncStatus('offline', 'Offline');
+          else setCloudSyncStatus('error', 'Cloud Error');
         });
-        const state = computeSubscriptionState(currentUser);
-        if (currentUser.role === 'admin' || state.canUse) {
-          loadLocalLabelsForCurrentUser();
-          startSharedLabelsSync();
-          closeLogin();
-          showDashboard();
+
+        if (currentUser.role === 'admin') {
+          $('adminTabBtn').style.display = '';
+          renderAdminCustomerPanel();
+        } else {
+          $('adminTabBtn').style.display = 'none';
         }
-        else if (currentUser.status === 'pending') await denyAndSignOut('Approval Required', 'Your account was created successfully, but an administrator must approve it before you can use the dashboard.');
-        else await denyAndSignOut(state.label, state.text);
+        startSharedLabelsSync();
       } catch (err) {
         console.error(err);
+        setLoginProcessing(false);
         await denyAndSignOut('Account error', 'We could not verify your account status. Please contact the administrator.');
       }
     });
@@ -2858,12 +2892,15 @@
   function setCloudSyncStatus(mode, text) {
     const el = $('cloudSyncStatus');
     if (!el) return;
-    el.className = 'cloud-sync-badge' + (mode === 'syncing' ? ' syncing' : mode === 'offline' ? ' offline' : '');
+    const cls = mode === 'syncing' ? ' syncing' : (mode === 'offline' ? ' offline' : (mode === 'error' ? ' error' : ' connected'));
+    el.className = 'cloud-sync-badge' + cls;
     el.innerHTML = mode === 'syncing'
       ? '<i class="fas fa-sync-alt fa-spin"></i> Syncing…'
       : mode === 'offline'
         ? '<i class="fas fa-cloud-slash"></i> Offline'
-        : '<i class="fas fa-cloud"></i> ' + escapeHtml(text || 'Cloud Sync');
+        : mode === 'error'
+          ? '<i class="fas fa-triangle-exclamation"></i> Cloud Error'
+          : '<i class="fas fa-cloud"></i> ' + escapeHtml(text || 'Cloud Connected');
   }
 
   function normalizeLabelForUser(label) {
@@ -2992,8 +3029,8 @@
     setCloudSyncStatus('syncing');
     const labelsRef = fbDb.collection('users').doc(currentUser.uid).collection('labels');
     userLabelsUnsub = labelsRef.orderBy('updatedAt', 'desc').limit(1000).onSnapshot(
-      snap => { mergeUserLabels(snap); scheduleCloudSync(); },
-      err => { console.error('User labels listener:', err); setCloudSyncStatus('offline', 'Sync unavailable'); }
+      snap => { mergeUserLabels(snap); setCloudSyncStatus('ok', snap.metadata?.fromCache ? 'Cloud Cached' : 'Cloud Connected'); scheduleCloudSync(); },
+      err => { console.error('User labels listener:', err); if (!navigator.onLine) setCloudSyncStatus('offline', 'Offline'); else setCloudSyncStatus('error', 'Cloud Error'); }
     );
     scheduleCloudSync();
   }
@@ -5422,11 +5459,22 @@
     reader.readAsText(file);
   });
 
+  window.addEventListener('online', () => {
+    if (currentUser) { setCloudSyncStatus('syncing', 'Reconnecting…'); startSharedLabelsSync(); }
+    else setFirebaseStatus(true);
+  });
+  window.addEventListener('offline', () => {
+    if (currentUser) setCloudSyncStatus('offline', 'Offline');
+    else setFirebaseStatus(false);
+  });
+
   // ==================== INIT ====================
   (async function init() {
     await ensureLocalAdmin();
     restoreSettings();
-    await loadSubscriptionConfig();
+    // Start auth immediately; subscription pricing loads in parallel so a slow
+    // settings read cannot delay the login/dashboard transition.
+    const pricingPromise = loadSubscriptionConfig().catch(e => console.warn('Pricing load:', e));
     applyTextSizes();
     // Labels are account-scoped. Do not load a global/shared label list before authentication.
     labelsList = [];
